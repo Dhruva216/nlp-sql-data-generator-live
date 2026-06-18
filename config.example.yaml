@@ -1,0 +1,58 @@
+# Copy to config.yaml and adjust. URIs can use env vars: ${DATABASE_URL}
+
+databases:
+  # Demo SQLite (local)
+  - id: sales_db
+    uri: sqlite:///./data/sales.db
+  - id: hr_db
+    uri: sqlite:///./data/hr.db
+
+  # Live SQL Server — credentials stay on the server, never in the browser or LLM.
+  # pip install -e ".[mssql]" and install "ODBC Driver 18 for SQL Server" on the host.
+  # - id: mssql_live
+  #   uri: ${MSSQL_DATABASE_URL}
+
+retrieval:
+  top_k: 24
+  min_score: 0.12
+
+execution:
+  max_rows: 500
+  default_limit: 100
+  read_only: true
+
+llm:
+  provider: openai_compatible
+  base_url: https://api.openai.com/v1
+  model: gpt-4o-mini
+  temperature: 0.1
+  max_tokens: 1024
+
+# Authorization: exchange client_id + client_secret for opaque Bearer tokens.
+# The LLM never receives secrets or user identity — only schema metadata.
+auth:
+  token_ttl_seconds: 3600
+  clients:
+    - client_id: sales_reader
+      client_secret: change-me
+      databases:
+        - id: sales_db
+          tables: "*"
+    - client_id: hr_reader
+      client_secret: change-me
+      databases:
+        - id: hr_db
+          tables:
+            - employees
+    # Example: customer-facing app user (scoped to SQL Server + specific tables)
+    # - client_id: customer_portal
+    #   client_secret: change-me
+    #   databases:
+    #     - id: mssql_live
+    #       tables: ["dbo.Orders", "dbo.Customers"]
+
+server:
+  serve_chat_ui: true
+  cors_origins:
+    - http://127.0.0.1:8000
+    - http://localhost:8000

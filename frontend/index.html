@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div class="app" id="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <div>
+            <h1>Data Assistant</h1>
+            <p>Ask questions in plain English</p>
+          </div>
+        </div>
+
+        <section class="panel connect-panel" id="connectPanel">
+          <h2>Connect</h2>
+          <p class="hint">
+            Sign in with API credentials. Your browser never touches the database — only
+            this server’s APIs do.
+          </p>
+          <label>
+            <span>API base URL</span>
+            <input
+              type="url"
+              id="apiBase"
+              placeholder="http://127.0.0.1:8000"
+              autocomplete="off"
+            />
+          </label>
+          <label>
+            <span>Client ID</span>
+            <input type="text" id="clientId" autocomplete="username" />
+          </label>
+          <label>
+            <span>Client secret</span>
+            <input type="password" id="clientSecret" autocomplete="current-password" />
+          </label>
+          <button type="button" class="btn primary" id="connectBtn">Connect</button>
+          <p class="error" id="connectError" hidden></p>
+        </section>
+
+        <section class="panel status-panel" id="statusPanel" hidden>
+          <div class="status-row">
+            <span class="status-dot connected" id="statusDot"></span>
+            <span id="statusText">Connected</span>
+          </div>
+          <button type="button" class="btn ghost" id="disconnectBtn">Disconnect</button>
+        </section>
+
+        <footer class="sidebar-foot">
+          <small>Read-only queries · Schema-only AI · Token-scoped access</small>
+        </footer>
+      </aside>
+
+      <main class="chat-main">
+        <header class="chat-header">
+          <h2>Chat</h2>
+          <p id="chatSubtitle">Connect to start asking about your data</p>
+        </header>
+
+        <div class="messages" id="messages" aria-live="polite">
+          <div class="welcome" id="welcome">
+            <h3>Welcome</h3>
+            <p>
+              After you connect, ask things like:
+              <em>“Show top 10 customers by revenue last quarter”</em>
+            </p>
+            <ul>
+              <li>Answers come from live SQL Server (via the API)</li>
+              <li>The assistant only sees table/column names, not your password</li>
+              <li>Writes and deletes are blocked server-side</li>
+            </ul>
+          </div>
+        </div>
+
+        <form class="composer" id="composerForm">
+          <textarea
+            id="questionInput"
+            rows="1"
+            placeholder="Ask a question about your data…"
+            disabled
+          ></textarea>
+          <button type="submit" class="btn primary send-btn" id="sendBtn" disabled>
+            Send
+          </button>
+        </form>
+      </main>
+    </div>
+
+    <script src="/assets/chat.js" type="module"></script>
+  </body>
+</html>
