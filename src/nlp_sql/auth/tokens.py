@@ -51,24 +51,69 @@ class AccessGrant:
         return False
 
 
+import json
+from pathlib import Path
+
 @dataclass
 class TokenStore:
     _by_token: dict[str, AccessGrant] = field(default_factory=dict)
+    _db_path: Path = field(default_factory=lambda: Path(".tokens.json"))
+
+    def _load(self) -> None:
+        if not self._db_path.is_file():
+            return
+        try:
+            data = json.loads(self._db_path.read_text(encoding="utf-8"))
+            self._by_token.clear()
+            for k, v in data.items():
+                self._by_token[k] = AccessGrant(
+                    token_id=v["token_id"],
+                    expires_at=v["expires_at"],
+                    databases=tuple(
+                        DatabaseGrant(database_id=db["database_id"], tables=db["tables"])
+                        for db in v["databases"]
+                    ),
+                )
+        except Exception:
+            pass
+
+    def _save(self) -> None:
+        try:
+            data = {}
+            for k, grant in self._by_token.items():
+                data[k] = {
+                    "token_id": grant.token_id,
+                    "expires_at": grant.expires_at,
+                    "databases": [
+                        {"database_id": db.database_id, "tables": db.tables}
+                        for db in grant.databases
+                    ],
+                }
+            self._db_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        except Exception:
+            pass
 
     def put(self, token: str, grant: AccessGrant) -> None:
+        self._load()
         self._by_token[token] = grant
+        self._save()
 
     def get(self, token: str) -> AccessGrant | None:
+        self._load()
         grant = self._by_token.get(token)
         if grant is None:
             return None
         if time.time() > grant.expires_at:
             del self._by_token[token]
+            self._save()
             return None
         return grant
 
     def revoke(self, token: str) -> None:
-        self._by_token.pop(token, None)
+        self._load()
+        if token in self._by_token:
+            del self._by_token[token]
+            self._save()
 
 
 # Process-wide store (swap for Redis in production)

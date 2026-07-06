@@ -21,8 +21,8 @@ dependencies = [
 [project.optional-dependencies]
 postgres = ["psycopg[binary]>=3.2"]
 mysql = ["pymysql>=1.1"]
-mssql = ["pyodbc>=5.0"]
-all-drivers = ["psycopg[binary]>=3.2", "pymysql>=1.1", "pyodbc>=5.0"]
+mssql = ["pyodbc>=5.0", "pymssql>=2.3.0"]
+all-drivers = ["psycopg[binary]>=3.2", "pymysql>=1.1", "pyodbc>=5.0", "pymssql>=2.3.0"]
 
 [project.scripts]
 nlp-sql = "nlp_sql.cli:app"
