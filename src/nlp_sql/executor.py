@@ -16,7 +16,12 @@ def run_query(
 ) -> tuple[list[str], list[dict[str, object]]]:
     if read_only:
         assert_read_only_sql(sql)
-    final_sql = ensure_limit(sql, default_limit=default_limit, max_rows=max_rows)
+    final_sql = ensure_limit(
+        sql,
+        default_limit=default_limit,
+        max_rows=max_rows,
+        dialect=engine.dialect.name,
+    )
     stmt = text(final_sql)
 
     with engine.connect() as conn:

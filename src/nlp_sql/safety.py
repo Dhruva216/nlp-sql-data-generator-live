@@ -51,10 +51,12 @@ def assert_select_only(sql: str) -> None:
     assert_read_only_sql(sql)
 
 
-def ensure_limit(sql: str, default_limit: int, max_rows: int) -> str:
+def ensure_limit(sql: str, default_limit: int, max_rows: int, dialect: str = "sqlite") -> str:
     n = normalize_single_statement(sql)
     low = n.lower()
     cap = min(default_limit, max_rows)
+    if dialect == "mssql":
+        return n
     if re.search(r"\blimit\s+\d+\b", low):
         return n + ";" if not n.endswith(";") else n
     return f"{n} LIMIT {cap}"
