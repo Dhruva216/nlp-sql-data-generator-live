@@ -29,6 +29,7 @@ class LLMSettings(BaseModel):
     model: str = "gpt-4o-mini"
     temperature: float = 0.1
     max_tokens: int = 1024
+    custom_instructions: str | None = None
 
 
 class ClientDatabaseGrant(BaseModel):

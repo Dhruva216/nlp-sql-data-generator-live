@@ -50,16 +50,22 @@ def generate_sql_sync(
     settings: LLMSettings,
 ) -> tuple[str, str, str | None]:
     """Call OpenAI-compatible chat API; return (database_id, sql, explanation)."""
-    system = (
-        "You are a SQL author that only sees database SCHEMA (table and column names/types). "
-        "You do NOT have direct database access and you must NEVER assume or invent row values. "
+    system_lines = [
+        "You are a SQL author that only sees database SCHEMA (table and column names/types).",
+        "You do NOT have direct database access and you must NEVER assume or invent row values.",
         "Your SQL will be submitted to a secure read-only API that enforces permissions and blocks "
-        "INSERT, UPDATE, DELETE, DROP, ALTER, and all other write/DDL operations. "
-        "Output a single JSON object only, no markdown, with keys: "
-        '"database_id" (one of the allowed ids), "sql" (one read-only SELECT or WITH query), '
-        'and optional "explanation" (short). Use only tables and columns from the schema context. '
+        "INSERT, UPDATE, DELETE, DROP, ALTER, and all other write/DDL operations.",
+        "Read the dialect name listed next to the Database ID in the schema context, and follow its syntax rules:",
+        "  - If dialect is 'mssql' (SQL Server): Use T-SQL syntax. Use SELECT TOP N instead of LIMIT. Use T-SQL functions like DB_NAME() where appropriate.",
+        "  - If dialect is 'sqlite': Use standard SQLite syntax and functions.",
+        "Output a single JSON object only, no markdown, with keys:",
+        '  "database_id" (one of the allowed ids), "sql" (one read-only SELECT or WITH query), '
+        '  and optional "explanation" (short). Use only tables and columns from the schema context.',
         "Qualify table names EXACTLY as shown in the schema context. Do not prepend database IDs to table names. No SQL comments."
-    )
+    ]
+    if settings.custom_instructions:
+        system_lines.append("\nAdditional Custom Rules and Examples:\n" + settings.custom_instructions)
+    system = "\n".join(system_lines)
     dbs = ", ".join(f"`{d}`" for d in database_ids)
     user = (
         f"User request:\n{user_request}\n\n"
