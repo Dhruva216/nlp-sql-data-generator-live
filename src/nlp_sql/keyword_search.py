@@ -9,6 +9,14 @@ from nlp_sql.registry import table_fqn
 
 _TOKEN_RE = re.compile(r"[a-zA-Z0-9_]+", re.UNICODE)
 
+_STOP_WORDS = {
+    "show", "select", "me", "all", "the", "a", "an", "of", "to", "for", "by", 
+    "from", "what", "how", "many", "where", "is", "are", "was", "were", "in", 
+    "on", "at", "with", "this", "that", "these", "those", "here", "there", 
+    "who", "which", "whose", "whom", "can", "could", "would", "should", "will",
+    "query", "table", "tables", "database", "databases", "list", "get", "find"
+}
+
 
 def tokenize(text: str) -> list[str]:
     return [t.lower() for t in _TOKEN_RE.findall(text)]
@@ -19,7 +27,7 @@ def _chunk_texts(entries: list[DatabaseCatalogEntry]) -> list[tuple[str, str | N
     chunks: list[tuple[str, str | None, str, str]] = []
     for e in entries:
         for t in e.tables:
-            col_parts = [f"{c.name} {c.type_name}" for c in t.columns]
+            col_parts = [c.name for c in t.columns]
             col_blob = " ".join(col_parts)
             fq = table_fqn(e.db_id, t)
             full = f"{e.db_id} {fq} {t.name} {col_blob}"
@@ -33,7 +41,11 @@ def search_keywords(
     top_k: int,
     min_score: float,
 ) -> list[RetrievalHit]:
-    q_tokens = tokenize(query)
+    raw_tokens = tokenize(query)
+    q_tokens = [tok for tok in raw_tokens if tok not in _STOP_WORDS and len(tok) >= 2]
+    if not q_tokens:
+        # Fallback if query only contains stop words
+        q_tokens = [tok for tok in raw_tokens if len(tok) >= 2]
     if not q_tokens:
         return []
     q_joined = " ".join(q_tokens)
