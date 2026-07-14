@@ -6,6 +6,17 @@ from sqlalchemy.engine import Engine, Result
 from nlp_sql.safety import assert_read_only_sql, ensure_limit, normalize_single_statement
 
 
+def sanitize_row_value(val: object) -> object:
+    if isinstance(val, bytes):
+        try:
+            return val.decode("utf-8")
+        except UnicodeDecodeError:
+            if len(val) <= 16:
+                return "0x" + val.hex().upper()
+            return f"<binary data: {len(val)} bytes>"
+    return val
+
+
 def run_query(
     engine: Engine,
     sql: str,
@@ -34,5 +45,5 @@ def run_query(
 
     rows: list[dict[str, object]] = []
     for row in rows_raw:
-        rows.append({cols[i]: row[i] for i in range(len(cols))})
+        rows.append({cols[i]: sanitize_row_value(row[i]) for i in range(len(cols))})
     return cols, rows
