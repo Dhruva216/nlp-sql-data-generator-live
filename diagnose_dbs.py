@@ -42,6 +42,21 @@ def diagnose():
             with engine.connect() as conn:
                 res = conn.execute(text("SELECT 1")).scalar()
                 print(f"  [SUCCESS] Connected to {d.id} (SELECT 1 returned {res})")
+                
+                # Test select from UserInfo to check actual data
+                if d.id == "mssql_live":
+                    print("\nChecking raw data in [dbo].[UserInfo] table:")
+                    try:
+                        sql = "SELECT TOP 3 UserId, UserName, Password, FirstName, LastName FROM [dbo].[UserInfo]"
+                        res_rows = conn.execute(text(sql))
+                        cols = list(res_rows.keys())
+                        print(f"  Columns: {cols}")
+                        for row in res_rows:
+                            print(f"  Raw row tuple: {row}")
+                            row_dict = {cols[i]: row[i] for i in range(len(cols))}
+                            print(f"  Mapped row: {row_dict}")
+                    except Exception as ex:
+                        print(f"  Could not read UserInfo: {ex}")
         except Exception as e:
             print(f"  [FAILED] Connection failed for {d.id}:")
             print(f"  Error details: {e}")
