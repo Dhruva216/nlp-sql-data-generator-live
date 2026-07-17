@@ -41,3 +41,4 @@ class QueryResult:
     database_ids_used: list[str]
     retrieval_context: list[RetrievalHit] = field(default_factory=list)
     explanation: str | None = None
+    llm_usage: dict[str, int] = field(default_factory=lambda: {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0})

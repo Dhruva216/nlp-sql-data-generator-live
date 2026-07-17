@@ -24,6 +24,7 @@ class NlpQueryResponse(BaseModel):
     database_ids_used: list[str]
     explanation: str | None = None
     schema_tables_used: list[dict[str, Any]] = Field(default_factory=list)
+    llm_usage: dict[str, int] = Field(default_factory=lambda: {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0})
 
 
 @router.post("/query", response_model=NlpQueryResponse)
@@ -59,4 +60,5 @@ def nlp_query(
         database_ids_used=result.database_ids_used,
         explanation=result.explanation,
         schema_tables_used=schema_tables_used,
+        llm_usage=result.llm_usage,
     )

@@ -169,8 +169,16 @@ function renderAssistantResponse(data) {
   }
   if (data.sql) {
     html += `<pre class="sql-block">${escapeHtml(data.sql)}</pre>`;
+    let metaText = "";
     if (data.database_ids_used?.length) {
-      html += `<p class="meta">Database: ${escapeHtml(data.database_ids_used.join(", "))}</p>`;
+      metaText += `Database: ${escapeHtml(data.database_ids_used.join(", "))}`;
+    }
+    if (data.llm_usage && data.llm_usage.total_tokens > 0) {
+      if (metaText) metaText += " &nbsp;·&nbsp; ";
+      metaText += `Tokens: <strong>${data.llm_usage.total_tokens}</strong> (Prompt: ${data.llm_usage.prompt_tokens} | Completion: ${data.llm_usage.completion_tokens})`;
+    }
+    if (metaText) {
+      html += `<p class="meta">${metaText}</p>`;
     }
   }
   if (data.column_names?.length) {

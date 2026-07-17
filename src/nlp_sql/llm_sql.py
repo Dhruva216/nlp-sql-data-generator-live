@@ -48,8 +48,8 @@ def generate_sql_sync(
     schema_context: str,
     database_ids: list[str],
     settings: LLMSettings,
-) -> tuple[str, str, str | None]:
-    """Call OpenAI-compatible chat API; return (database_id, sql, explanation)."""
+) -> tuple[str, str, str | None, dict[str, int]]:
+    """Call OpenAI-compatible chat API; return (database_id, sql, explanation, usage)."""
     system_lines = [
         "You are a SQL author that only sees database SCHEMA (table and column names/types).",
         "You do NOT have direct database access and you must NEVER assume or invent row values.",
@@ -90,6 +90,13 @@ def generate_sql_sync(
         r.raise_for_status()
         data = r.json()
 
+    usage = data.get("usage", {})
+    usage_dict = {
+        "prompt_tokens": usage.get("prompt_tokens", 0),
+        "completion_tokens": usage.get("completion_tokens", 0),
+        "total_tokens": usage.get("total_tokens", 0),
+    }
+
     content = data["choices"][0]["message"]["content"]
     if not isinstance(content, str):
         raise ValueError("Unexpected API response shape")
@@ -99,7 +106,7 @@ def generate_sql_sync(
     except json.JSONDecodeError:
         fenced = extract_sql_fenced(content)
         if fenced and database_ids:
-            return database_ids[0], fenced, content[:2000]
+            return database_ids[0], fenced, content[:2000], usage_dict
         raise
 
     db_id = str(obj.get("database_id", "")).strip()
@@ -110,4 +117,4 @@ def generate_sql_sync(
         raise ValueError("Model returned empty sql")
     expl = obj.get("explanation")
     expl_str = str(expl) if expl is not None else None
-    return db_id, sql, expl_str
+    return db_id, sql, expl_str, usage_dict

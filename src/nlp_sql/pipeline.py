@@ -68,7 +68,7 @@ def answer_request(
             explanation="Matched keywords but no schema entries are available for this token.",
         )
 
-    db_id, sql, expl = generate_sql_sync(user_request, schema_text, db_ids, cfg.llm)
+    db_id, sql, expl, usage = generate_sql_sync(user_request, schema_text, db_ids, cfg.llm)
 
     cols, rows = data_svc.execute(db_id, sql, grant)
 
@@ -79,4 +79,5 @@ def answer_request(
         database_ids_used=[db_id],
         retrieval_context=hits,
         explanation=expl,
+        llm_usage=usage,
     )
