@@ -30,6 +30,7 @@ const els = {
   tokenModelName: document.getElementById("tokenModelName"),
   tokenContextLimit: document.getElementById("tokenContextLimit"),
   tokenBar: document.getElementById("tokenBar"),
+  tokenBarPct: document.getElementById("tokenBarPct"),
   tokenSessionTotal: document.getElementById("tokenSessionTotal"),
   tokenLastQuery: document.getElementById("tokenLastQuery"),
   tokenQueryCount: document.getElementById("tokenQueryCount"),
@@ -61,7 +62,9 @@ function updateTokenPanel(usage) {
   const lastPrompt = usage ? usage.prompt_tokens : 0;
   const pct = Math.min((lastPrompt / MODEL_CONTEXT_LIMIT) * 100, 100);
   els.tokenBar.style.width = pct.toFixed(2) + "%";
+  els.tokenBarPct.textContent = pct.toFixed(1) + "%";
   els.tokenBar.classList.toggle("warn", pct > 75);
+  els.tokenBarPct.style.color = pct > 75 ? "var(--error)" : "var(--accent)";
 
   /* Detail breakdown */
   if (usage && usage.total_tokens > 0) {
@@ -75,6 +78,7 @@ function resetTokenPanel() {
   sessionTokens = { prompt: 0, completion: 0, total: 0, queryCount: 0 };
   els.tokenPanel.hidden = true;
   els.tokenBar.style.width = "0%";
+  els.tokenBarPct.textContent = "0%";
   els.tokenBar.classList.remove("warn");
   els.tokenSessionTotal.textContent = "0";
   els.tokenLastQuery.textContent = "0";
