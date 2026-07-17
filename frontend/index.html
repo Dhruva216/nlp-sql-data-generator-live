@@ -58,6 +58,39 @@
           <button type="button" class="btn ghost" id="disconnectBtn">Disconnect</button>
         </section>
 
+        <section class="panel token-panel" id="tokenPanel" hidden>
+          <h2>Token Usage</h2>
+          <div class="token-model-row">
+            <span class="token-label">Model</span>
+            <span class="token-value" id="tokenModelName">—</span>
+          </div>
+          <div class="token-model-row">
+            <span class="token-label">Context Window</span>
+            <span class="token-value" id="tokenContextLimit">—</span>
+          </div>
+          <div class="token-bar-wrap">
+            <div class="token-bar" id="tokenBar" style="width: 0%"></div>
+          </div>
+          <div class="token-stats">
+            <div class="token-stat">
+              <span class="token-stat-num" id="tokenSessionTotal">0</span>
+              <span class="token-stat-label">Session Total</span>
+            </div>
+            <div class="token-stat">
+              <span class="token-stat-num" id="tokenLastQuery">0</span>
+              <span class="token-stat-label">Last Query</span>
+            </div>
+            <div class="token-stat">
+              <span class="token-stat-num" id="tokenQueryCount">0</span>
+              <span class="token-stat-label">Questions</span>
+            </div>
+          </div>
+          <div class="token-detail-row" id="tokenDetailRow" hidden>
+            <span>Prompt: <strong id="tokenLastPrompt">0</strong></span>
+            <span>Completion: <strong id="tokenLastCompletion">0</strong></span>
+          </div>
+        </section>
+
         <footer class="sidebar-foot">
           <small>Read-only queries · Schema-only AI · Token-scoped access</small>
         </footer>

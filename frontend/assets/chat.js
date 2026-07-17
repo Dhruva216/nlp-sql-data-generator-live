@@ -5,6 +5,11 @@
 
 const STORAGE_KEY = "nlp_sql_chat";
 
+/* ── Cumulative token tracking ── */
+let sessionTokens = { prompt: 0, completion: 0, total: 0, queryCount: 0 };
+const MODEL_CONTEXT_LIMIT = 131072; // Gemma 4 31B context window (128K)
+const MODEL_DISPLAY_NAME = "gemma4:31b-cloud";
+
 const els = {
   apiBase: document.getElementById("apiBase"),
   clientId: document.getElementById("clientId"),
@@ -20,7 +25,62 @@ const els = {
   composerForm: document.getElementById("composerForm"),
   questionInput: document.getElementById("questionInput"),
   sendBtn: document.getElementById("sendBtn"),
+  /* Token panel */
+  tokenPanel: document.getElementById("tokenPanel"),
+  tokenModelName: document.getElementById("tokenModelName"),
+  tokenContextLimit: document.getElementById("tokenContextLimit"),
+  tokenBar: document.getElementById("tokenBar"),
+  tokenSessionTotal: document.getElementById("tokenSessionTotal"),
+  tokenLastQuery: document.getElementById("tokenLastQuery"),
+  tokenQueryCount: document.getElementById("tokenQueryCount"),
+  tokenDetailRow: document.getElementById("tokenDetailRow"),
+  tokenLastPrompt: document.getElementById("tokenLastPrompt"),
+  tokenLastCompletion: document.getElementById("tokenLastCompletion"),
 };
+
+function fmtNum(n) {
+  return n.toLocaleString();
+}
+
+function updateTokenPanel(usage) {
+  if (usage && usage.total_tokens > 0) {
+    sessionTokens.prompt += usage.prompt_tokens;
+    sessionTokens.completion += usage.completion_tokens;
+    sessionTokens.total += usage.total_tokens;
+    sessionTokens.queryCount += 1;
+  }
+
+  els.tokenModelName.textContent = MODEL_DISPLAY_NAME;
+  els.tokenContextLimit.textContent = fmtNum(MODEL_CONTEXT_LIMIT) + " tokens";
+
+  els.tokenSessionTotal.textContent = fmtNum(sessionTokens.total);
+  els.tokenLastQuery.textContent = usage ? fmtNum(usage.total_tokens) : "0";
+  els.tokenQueryCount.textContent = sessionTokens.queryCount;
+
+  /* Progress bar — shows the LAST query's prompt tokens as a % of context window */
+  const lastPrompt = usage ? usage.prompt_tokens : 0;
+  const pct = Math.min((lastPrompt / MODEL_CONTEXT_LIMIT) * 100, 100);
+  els.tokenBar.style.width = pct.toFixed(2) + "%";
+  els.tokenBar.classList.toggle("warn", pct > 75);
+
+  /* Detail breakdown */
+  if (usage && usage.total_tokens > 0) {
+    els.tokenDetailRow.hidden = false;
+    els.tokenLastPrompt.textContent = fmtNum(usage.prompt_tokens);
+    els.tokenLastCompletion.textContent = fmtNum(usage.completion_tokens);
+  }
+}
+
+function resetTokenPanel() {
+  sessionTokens = { prompt: 0, completion: 0, total: 0, queryCount: 0 };
+  els.tokenPanel.hidden = true;
+  els.tokenBar.style.width = "0%";
+  els.tokenBar.classList.remove("warn");
+  els.tokenSessionTotal.textContent = "0";
+  els.tokenLastQuery.textContent = "0";
+  els.tokenQueryCount.textContent = "0";
+  els.tokenDetailRow.hidden = true;
+}
 
 function loadState() {
   try {
@@ -52,6 +112,10 @@ function setConnected(connected) {
   els.chatSubtitle.textContent = connected
     ? "Ask about your data — answers run through the secure API"
     : "Connect to start asking about your data";
+  if (connected) {
+    els.tokenPanel.hidden = false;
+    updateTokenPanel(null);
+  }
 }
 
 function showConnectError(msg) {
@@ -103,6 +167,7 @@ async function connect() {
       apiBase: apiBase(),
       clientId: els.clientId.value.trim(),
     });
+    resetTokenPanel();
     setConnected(true);
     appendMessage(
       "assistant",
@@ -119,6 +184,7 @@ function disconnect() {
   sessionStorage.removeItem(STORAGE_KEY);
   setConnected(false);
   clearMessages();
+  resetTokenPanel();
   els.welcome.hidden = false;
 }
 
@@ -175,7 +241,7 @@ function renderAssistantResponse(data) {
     }
     if (data.llm_usage && data.llm_usage.total_tokens > 0) {
       if (metaText) metaText += " &nbsp;·&nbsp; ";
-      metaText += `Tokens: <strong>${data.llm_usage.total_tokens}</strong> (Prompt: ${data.llm_usage.prompt_tokens} | Completion: ${data.llm_usage.completion_tokens})`;
+      metaText += `Tokens: <strong>${fmtNum(data.llm_usage.total_tokens)}</strong> (Prompt: ${fmtNum(data.llm_usage.prompt_tokens)} | Completion: ${fmtNum(data.llm_usage.completion_tokens)})`;
     }
     if (metaText) {
       html += `<p class="meta">${metaText}</p>`;
@@ -205,6 +271,11 @@ async function sendQuestion(text) {
     });
     loading.remove();
     appendMessage("assistant", renderAssistantResponse(data));
+
+    /* Update the cumulative token panel */
+    if (data.llm_usage) {
+      updateTokenPanel(data.llm_usage);
+    }
   } catch (e) {
     loading.remove();
     appendMessage("assistant", `<p>${escapeHtml(e.message)}</p>`, "error");
@@ -242,3 +313,4 @@ function init() {
 }
 
 init();
+
