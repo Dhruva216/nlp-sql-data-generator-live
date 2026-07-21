@@ -58,11 +58,11 @@ function updateTokenPanel(usage) {
   els.tokenLastQuery.textContent = usage ? fmtNum(usage.total_tokens) : "0";
   els.tokenQueryCount.textContent = sessionTokens.queryCount;
 
-  /* Progress bar — shows the LAST query's prompt tokens as a % of context window */
-  const lastPrompt = usage ? usage.prompt_tokens : 0;
-  const pct = Math.min((lastPrompt / MODEL_CONTEXT_LIMIT) * 100, 100);
+  /* Progress bar — dynamically shows actual query context usage (prompt tokens) as % of context limit */
+  const queryPromptTokens = usage ? usage.prompt_tokens : 0;
+  const pct = Math.min((queryPromptTokens / MODEL_CONTEXT_LIMIT) * 100, 100);
   els.tokenBar.style.width = pct.toFixed(2) + "%";
-  els.tokenBarPct.textContent = pct.toFixed(1) + "%";
+  els.tokenBarPct.textContent = pct.toFixed(2) + "%";
   els.tokenBar.classList.toggle("warn", pct > 75);
   els.tokenBarPct.style.color = pct > 75 ? "var(--error)" : "var(--accent)";
 
@@ -76,14 +76,14 @@ function updateTokenPanel(usage) {
 
 function resetTokenPanel() {
   sessionTokens = { prompt: 0, completion: 0, total: 0, queryCount: 0 };
-  els.tokenPanel.hidden = true;
   els.tokenBar.style.width = "0%";
-  els.tokenBarPct.textContent = "0%";
+  els.tokenBarPct.textContent = "0.00%";
   els.tokenBar.classList.remove("warn");
   els.tokenSessionTotal.textContent = "0";
   els.tokenLastQuery.textContent = "0";
   els.tokenQueryCount.textContent = "0";
-  els.tokenDetailRow.hidden = true;
+  els.tokenLastPrompt.textContent = "0";
+  els.tokenLastCompletion.textContent = "0";
 }
 
 function loadState() {

@@ -61,7 +61,9 @@ def generate_sql_sync(
         "Output a single JSON object only, no markdown, with keys:",
         '  "database_id" (one of the allowed ids), "sql" (one read-only SELECT or WITH query), '
         '  and optional "explanation" (short). Use only tables and columns from the schema context.',
-        "Qualify table names EXACTLY as shown in the schema context. Do not prepend database IDs to table names. No SQL comments."
+        "Qualify table names EXACTLY as shown in the schema context. Do not prepend database IDs to table names. No SQL comments.",
+        "CRITICAL FOR TABLE ALIASES: Do NOT include schema names or dots in table alias names (e.g. write `FROM dbo.Student AS Student` or `FROM dbo.Student AS s`, NEVER `FROM dbo.Student AS dbo.Student`).",
+        "CRITICAL FOR ALIASED COLUMNS: If a table is assigned an alias in FROM or JOIN (e.g., `FROM dbo.SIS_Student_Course_Test_Enrollment AS Enrollment`), ALL column references to that table in SELECT, WHERE, and JOIN MUST use the alias (`Enrollment.Points`), NEVER the full schema-qualified table name (`dbo.SIS_Student_Course_Test_Enrollment.Points`)."
     ]
     if settings.custom_instructions:
         system_lines.append("\nAdditional Custom Rules and Examples:\n" + settings.custom_instructions)
