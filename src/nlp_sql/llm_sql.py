@@ -62,8 +62,19 @@ def generate_sql_sync(
         '  "database_id" (one of the allowed ids), "sql" (one read-only SELECT or WITH query), '
         '  and optional "explanation" (short). Use only tables and columns from the schema context.',
         "Qualify table names EXACTLY as shown in the schema context. Do not prepend database IDs to table names. No SQL comments.",
-        "CRITICAL FOR TABLE ALIASES: Do NOT include schema names or dots in table alias names (e.g. write `FROM dbo.Student AS Student` or `FROM dbo.Student AS s`, NEVER `FROM dbo.Student AS dbo.Student`).",
-        "CRITICAL FOR ALIASED COLUMNS: If a table is assigned an alias in FROM or JOIN (e.g., `FROM dbo.SIS_Student_Course_Test_Enrollment AS Enrollment`), ALL column references to that table in SELECT, WHERE, and JOIN MUST use the alias (`Enrollment.Points`), NEVER the full schema-qualified table name (`dbo.SIS_Student_Course_Test_Enrollment.Points`)."
+        "CRITICAL FOR ALIASED COLUMNS: If a table is assigned an alias in FROM or JOIN (e.g., `FROM dbo.SIS_Student_Course_Test_Enrollment AS Enrollment`), ALL column references to that table in SELECT, WHERE, and JOIN MUST use the alias (`Enrollment.Points`), NEVER the full schema-qualified table name (`dbo.SIS_Student_Course_Test_Enrollment.Points`).",
+        "CRITICAL FOR CODE / LOOKUP / ID COLUMNS AND HUMAN-READABLE VALUES:",
+        "  - When a query asks for attributes like gender, status, type, category, role, state, etc., and tables in the schema contain numeric code IDs (e.g., `StudentGenderCodeId`, `StatusCodeId`, `TypeId`, etc.):",
+        "  - ALWAYS check for corresponding lookup, code, or reference tables in the schema context (e.g., `dbo.Code`, `dbo.Gender`, `dbo.Lookup`, `dbo.CodeMaster`, `dbo.SysCode`, `dbo.StudentGender`, etc.) or another table containing human-readable text (e.g., `dbo.Details.Gender`, `dbo.UserInfo.Gender`).",
+        "  - JOIN with the code/lookup table (or text table) to SELECT the human-readable word, text, description, or name column (e.g., `Code.Description`, `Details.Gender`, `Gender.Name`, `Code.CodeValue`) instead of returning raw integer/numeric code IDs (like 0, 254, 255).",
+        "  - If a lookup table or human-readable text column exists in the schema, users must see the actual words (e.g., 'Male', 'Female'), NOT raw obscure numeric code IDs.",
+        "CRITICAL FOR BOOLEAN / ATTENDANCE / STATUS FLAGS:",
+        "  - When selecting attendance status or boolean/bit flags (e.g., `SIS_Attendance.Status`, `IsPresent`, `IsActive`, etc.), DO NOT return raw `true`/`false` or `1`/`0`.",
+        "  - For attendance status, ALWAYS use a CASE statement to display human-readable values: `CASE WHEN A.Status = 1 OR A.Status = 'true' THEN 'Present' ELSE 'Absent' END AS Status`.",
+        "  - For other status or boolean flags, convert raw bits/booleans to user-friendly terms (e.g. 'Active'/'Inactive') using `CASE` statements.",
+        "CRITICAL FOR STUDENT FEES & FINANCIALS:",
+        "  - When student fees or financial details are requested, query the `dbo.SIS_Accounting_Financials_T` table.",
+        "  - Join `dbo.SIS_Accounting_Financials_T` with `dbo.UserInfo` (or `dbo.Student`) on `dbo.SIS_Accounting_Financials_T.ApplyAmountToId = dbo.UserInfo.UserId` to link student names to their fee details."
     ]
     if settings.custom_instructions:
         system_lines.append("\nAdditional Custom Rules and Examples:\n" + settings.custom_instructions)

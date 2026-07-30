@@ -48,21 +48,29 @@ def search_keywords(
         q_tokens = [tok for tok in raw_tokens if len(tok) >= 2]
     if not q_tokens:
         return []
+    lookup_terms = {"gender", "status", "type", "code", "category", "role", "state", "mode", "group", "level", "fee", "fees", "financial", "financials", "accounting", "amount"}
+    is_attribute_query = any(t in lookup_terms for t in q_tokens)
     q_joined = " ".join(q_tokens)
 
     chunks = _chunk_texts(catalog)
     scored: list[tuple[float, str, str | None, str, str]] = []
     for full, schema, table, db_id in chunks:
         table_lower = table.lower()
+        full_lower = full.lower()
         best = 0.0
         for tok in q_tokens:
             best = max(
                 best,
-                fuzz.partial_ratio(tok, full.lower()) / 100.0,
+                fuzz.partial_ratio(tok, full_lower) / 100.0,
                 fuzz.token_set_ratio(tok, table_lower) / 100.0,
             )
-        doc_score = fuzz.token_set_ratio(q_joined, full.lower()) / 100.0
+        doc_score = fuzz.token_set_ratio(q_joined, full_lower) / 100.0
         score = max(best, doc_score * 0.85)
+
+        # Boost lookup/code/reference/details/financials tables for attribute queries
+        if is_attribute_query and any(k in table_lower or k in full_lower for k in ("code", "lookup", "gender", "status", "type", "ref", "sys", "master", "detail", "financial", "accounting", "fee")):
+            score = max(score, 0.40)
+
         if score >= min_score:
             scored.append((score, full, schema, table, db_id))
 
