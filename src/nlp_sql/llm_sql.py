@@ -80,7 +80,7 @@ def generate_sql_sync(
         "  - MANDATORY: ALWAYS call stored procedure `dbo.SIS_Students_GetStudentDetailsByUserId` as it returns complete student details.",
         "  - Use this exact T-SQL structure:",
         "    DECLARE @UserId INT = (SELECT TOP 1 UserId FROM dbo.UserInfo WHERE FirstName = '<FirstName>' AND LastName = '<LastName>');",
-        "    EXEC dbo.SIS_Students_GetStudentDetailsByUserId @UserId = @UserId, @StudentStatusID = NULL, @GenderListId = NULL, @TeacherRoleId = NULL, @NameTitle = NULL, @AddressTypeListId = NULL, @StudentProgramStatusListID = NULL, @StudentCredentialAwarded = NULL, @StudentCredentialStatus = NULL, @StudentStatusListId = NULL;",
+        "    EXEC dbo.SIS_Students_GetStudentDetailsByUserId @UserId = @UserId, @StudentStatusID = NULL, @GenderListId = NULL, @TeacherRoleId = NULL, @NameTitle = NULL, @AddressTypeListId = NULL, @StudentProgramStatusListID = NULL, @StudentCredentialAwarded = NULL, @StudentCredentialStatus = NULL, @StudentStatusListId = NULL, @PaymentMethods = NULL;",
         "  - For attendance data (which is not in the stored procedure), also query dbo.SIS_Attendance joined on UserId.",
         "  - For fee data (which is not in the stored procedure), also query dbo.SIS_Accounting_Financials_T joined on ApplyAmountToId = UserId."
     ]
