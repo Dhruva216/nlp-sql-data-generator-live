@@ -11,7 +11,7 @@ _FORBIDDEN = re.compile(
     r"\b("
     r"insert|update|delete|drop|alter|truncate|create|replace|merge|"
     r"grant|revoke|attach|detach|pragma|vacuum|reindex|"
-    r"call|execute|exec|into\s+outfile|load\s+data"
+    r"call|into\s+outfile|load\s+data"
     r")\b",
     re.IGNORECASE,
 )
@@ -35,14 +35,16 @@ def normalize_single_statement(sql: str) -> str:
 
 
 def assert_read_only_sql(sql: str) -> None:
-    """Reject anything that is not a single read-only SELECT / WITH."""
-    n = normalize_single_statement(sql)
-    if ";" in n:
-        raise ValueError("Multiple SQL statements are not allowed")
-    low = n.lower()
-    if not low.startswith("select") and not low.startswith("with"):
-        raise ValueError("Only read-only SELECT (or WITH) queries are allowed")
-    if _FORBIDDEN.search(n):
+    """Reject anything that contains forbidden write or DDL keywords."""
+    clean_sql = strip_sql_comments(sql).strip()
+    if not clean_sql:
+        raise ValueError("Empty SQL query")
+    low = clean_sql.lower()
+    first_word = low.split()[0] if low.split() else ""
+    valid_starts = ("select", "with", "exec", "execute", "declare")
+    if not any(first_word.startswith(w) for w in valid_starts):
+        raise ValueError("Only read-only SELECT, WITH, EXEC, or DECLARE queries are allowed")
+    if _FORBIDDEN.search(clean_sql):
         raise ValueError("Query contains forbidden write or DDL keywords")
 
 
@@ -52,11 +54,11 @@ def assert_select_only(sql: str) -> None:
 
 
 def ensure_limit(sql: str, default_limit: int, max_rows: int, dialect: str = "sqlite") -> str:
+    if dialect == "mssql":
+        return sql.strip().rstrip(";")
     n = normalize_single_statement(sql)
     low = n.lower()
     cap = min(default_limit, max_rows)
-    if dialect == "mssql":
-        return n
     if re.search(r"\blimit\s+\d+\b", low):
         return n + ";" if not n.endswith(";") else n
     return f"{n} LIMIT {cap}"

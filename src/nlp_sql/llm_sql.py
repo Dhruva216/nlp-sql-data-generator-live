@@ -59,7 +59,7 @@ def generate_sql_sync(
         "  - If dialect is 'mssql' (SQL Server): Use T-SQL syntax. Use SELECT TOP N instead of LIMIT. Use T-SQL functions like DB_NAME() where appropriate.",
         "  - If dialect is 'sqlite': Use standard SQLite syntax and functions.",
         "Output a single JSON object only, no markdown, with keys:",
-        '  "database_id" (one of the allowed ids), "sql" (one read-only SELECT or WITH query), '
+        '  "database_id" (one of the allowed ids), "sql" (one read-only SELECT, WITH, DECLARE, or EXEC query), ',
         '  and optional "explanation" (short). Use only tables and columns from the schema context.',
         "Qualify table names EXACTLY as shown in the schema context. Do not prepend database IDs to table names. No SQL comments.",
         "CRITICAL FOR ALIASED COLUMNS: If a table is assigned an alias in FROM or JOIN (e.g., `FROM dbo.SIS_Student_Course_Test_Enrollment AS Enrollment`), ALL column references to that table in SELECT, WHERE, and JOIN MUST use the alias (`Enrollment.Points`), NEVER the full schema-qualified table name (`dbo.SIS_Student_Course_Test_Enrollment.Points`).",
@@ -74,7 +74,16 @@ def generate_sql_sync(
         "  - For other status or boolean flags, convert raw bits/booleans to user-friendly terms (e.g. 'Active'/'Inactive') using `CASE` statements.",
         "CRITICAL FOR STUDENT FEES & FINANCIALS:",
         "  - When student fees or financial details are requested, query the `dbo.SIS_Accounting_Financials_T` table.",
-        "  - Join `dbo.SIS_Accounting_Financials_T` with `dbo.UserInfo` (or `dbo.Student`) on `dbo.SIS_Accounting_Financials_T.ApplyAmountToId = dbo.UserInfo.UserId` to link student names to their fee details."
+        "  - Join `dbo.SIS_Accounting_Financials_T` with `dbo.UserInfo` (or `dbo.Student`) on `dbo.SIS_Accounting_Financials_T.ApplyAmountToId = dbo.UserInfo.UserId` to link student names to their fee details.",
+        "CRITICAL FOR INDIVIDUAL STUDENT DETAILS:",
+        "  - When full or individual student profile/details are requested for a specific student (by name or UserId):",
+        "  - STEP 1: Look up the student's UserId: DECLARE @UserId INT = (SELECT TOP 1 UserId FROM dbo.UserInfo WHERE FirstName = '<FirstName>' AND LastName = '<LastName>');",
+        "  - STEP 2: Call the stored procedure with BOTH required parameters: EXEC dbo.SIS_Students_GetStudentDetailsByUserId @UserId = @UserId, @StudentStatusID = NULL;",
+        "  - IMPORTANT: Always include @StudentStatusID = NULL in the EXEC call — it is a required parameter. Omitting it will cause an error.",
+        "  - The stored procedure is read-only and returns comprehensive student profile data.",
+        "  - For attendance data not in the stored procedure, query dbo.SIS_Attendance joined on UserId with CASE WHEN Status = 1 OR Status = 'true' THEN 'Present' ELSE 'Absent' END.",
+        "  - For fee data not in the stored procedure, query dbo.SIS_Accounting_Financials_T joined on ApplyAmountToId = UserId.",
+        "  - If the stored procedure call fails, fall back to: SELECT UI.*, S.*, D.* FROM dbo.UserInfo AS UI JOIN dbo.Student AS S ON UI.UserId = S.UserId LEFT JOIN dbo.Details AS D ON UI.UserId = D.StudentNo WHERE UI.FirstName = '<FirstName>' AND UI.LastName = '<LastName>'."
     ]
     if settings.custom_instructions:
         system_lines.append("\nAdditional Custom Rules and Examples:\n" + settings.custom_instructions)
