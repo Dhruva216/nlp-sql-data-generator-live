@@ -6,14 +6,27 @@ from sqlalchemy.engine import Engine, Result
 from nlp_sql.safety import assert_read_only_sql, ensure_limit, normalize_single_statement
 
 
-def sanitize_row_value(val: object) -> object:
+GENDER_MAP = {
+    254: "Male",
+    "254": "Male",
+    255: "Female",
+    "255": "Female",
+}
+
+
+def sanitize_row_value(val: object, col_name: str = "") -> object:
     if isinstance(val, bytes):
         try:
-            return val.decode("utf-8")
+            val = val.decode("utf-8")
         except UnicodeDecodeError:
             if len(val) <= 16:
                 return "0x" + val.hex().upper()
             return f"<binary data: {len(val)} bytes>"
+
+    if col_name.lower() in ("gender", "studentgender", "gendercode", "genderid"):
+        if val in GENDER_MAP:
+            return GENDER_MAP[val]
+
     return val
 
 
@@ -57,17 +70,17 @@ def run_query(
                     if not all_rows:
                         all_cols = list(cols)
                         for row in rows_raw[:max_rows]:
-                            all_rows.append({cols[i]: sanitize_row_value(row[i]) for i in range(len(cols))})
+                            all_rows.append({cols[i]: sanitize_row_value(row[i], cols[i]) for i in range(len(cols))})
                     else:
                         for idx, row in enumerate(rows_raw[:max_rows]):
                             if idx < len(all_rows):
                                 for i, col in enumerate(cols):
                                     if col not in all_rows[idx]:
-                                        all_rows[idx][col] = sanitize_row_value(row[i])
+                                        all_rows[idx][col] = sanitize_row_value(row[i], col)
                                         if col not in all_cols:
                                             all_cols.append(col)
                             else:
-                                new_row = {col: sanitize_row_value(row[i]) for i, col in enumerate(cols)}
+                                new_row = {col: sanitize_row_value(row[i], col) for i, col in enumerate(cols)}
                                 all_rows.append(new_row)
                                 for col in cols:
                                     if col not in all_cols:
