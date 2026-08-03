@@ -36,23 +36,26 @@ def run_query(
     stmt = text(final_sql)
 
     with engine.connect() as conn:
-        result: Result = conn.execute(stmt)
+        # Use underlying DB-API connection/cursor to support nextset() for stored procedures
+        raw_conn = getattr(conn.connection, "driver_connection", conn.connection)
+        cursor = raw_conn.cursor()
+        cursor.execute(final_sql)
+
         all_cols: list[str] = []
         all_rows: list[dict[str, object]] = []
 
         while True:
-            if getattr(result, "returns_rows", True):
+            desc = getattr(cursor, "description", None)
+            if desc:
+                cols = [d[0] for d in desc]
                 try:
-                    cols = list(result.keys())
-                    rows_raw = result.fetchmany(max_rows + 1)
+                    rows_raw = cursor.fetchall()
                 except Exception:
-                    cols = []
                     rows_raw = []
 
                 if rows_raw:
-                    # Ignore lookup tables that only have 2 columns ending with ID/Name if we haven't found main data
                     if not all_rows:
-                        all_cols = cols
+                        all_cols = list(cols)
                         for row in rows_raw[:max_rows]:
                             all_rows.append({cols[i]: sanitize_row_value(row[i]) for i in range(len(cols))})
                     else:
@@ -71,7 +74,8 @@ def run_query(
                                         all_cols.append(col)
 
             try:
-                if not hasattr(result, "nextset") or not result.nextset():
+                has_next = getattr(cursor, "nextset", None)
+                if not has_next or not has_next():
                     break
             except Exception:
                 break
