@@ -37,13 +37,43 @@ def run_query(
 
     with engine.connect() as conn:
         result: Result = conn.execute(stmt)
-        cols = list(result.keys())
-        rows_raw = result.fetchmany(max_rows + 1)
+        all_cols: list[str] = []
+        all_rows: list[dict[str, object]] = []
 
-    if len(rows_raw) > max_rows:
-        rows_raw = rows_raw[:max_rows]
+        while True:
+            if getattr(result, "returns_rows", True):
+                try:
+                    cols = list(result.keys())
+                    rows_raw = result.fetchmany(max_rows + 1)
+                except Exception:
+                    cols = []
+                    rows_raw = []
 
-    rows: list[dict[str, object]] = []
-    for row in rows_raw:
-        rows.append({cols[i]: sanitize_row_value(row[i]) for i in range(len(cols))})
-    return cols, rows
+                if rows_raw:
+                    # Ignore lookup tables that only have 2 columns ending with ID/Name if we haven't found main data
+                    if not all_rows:
+                        all_cols = cols
+                        for row in rows_raw[:max_rows]:
+                            all_rows.append({cols[i]: sanitize_row_value(row[i]) for i in range(len(cols))})
+                    else:
+                        for idx, row in enumerate(rows_raw[:max_rows]):
+                            if idx < len(all_rows):
+                                for i, col in enumerate(cols):
+                                    if col not in all_rows[idx]:
+                                        all_rows[idx][col] = sanitize_row_value(row[i])
+                                        if col not in all_cols:
+                                            all_cols.append(col)
+                            else:
+                                new_row = {col: sanitize_row_value(row[i]) for i, col in enumerate(cols)}
+                                all_rows.append(new_row)
+                                for col in cols:
+                                    if col not in all_cols:
+                                        all_cols.append(col)
+
+            try:
+                if not hasattr(result, "nextset") or not result.nextset():
+                    break
+            except Exception:
+                break
+
+    return all_cols, all_rows

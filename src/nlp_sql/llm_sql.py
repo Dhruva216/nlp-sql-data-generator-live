@@ -77,14 +77,9 @@ def generate_sql_sync(
         "  - Join `dbo.SIS_Accounting_Financials_T` with `dbo.UserInfo` (or `dbo.Student`) on `dbo.SIS_Accounting_Financials_T.ApplyAmountToId = dbo.UserInfo.UserId` to link student names to their fee details.",
         "CRITICAL FOR INDIVIDUAL STUDENT DETAILS:",
         "  - When full or individual student profile/details are requested for a specific student (by name or UserId):",
-        "  - Use this direct SELECT query — DO NOT use EXEC or stored procedures as they return multiple result sets incompatible with this API:",
-        "    SELECT UI.UserId, UI.FirstName, UI.LastName, UI.MiddleName, UI.Email, UI.UserName, UI.PhoneNumber, UI.SSN, UI.IdentificationValue, UI.UserImage,",
-        "           S.StudentId, S.StudentNumber, S.LegacyStudentId, S.DOB, S.IsInternationalStudent, S.SchoolId, S.ClassId, S.YearsInSchool, S.StudentImage,",
-        "           D.Gender, D.DateOfBirth, D.Advisor, D.Location, D.Status, D.Ethnicity, D.EnrollmentTerm, D.EnrollmentYear, D.TuitionRate, D.ProgramRequirements",
-        "    FROM dbo.UserInfo AS UI",
-        "    JOIN dbo.Student AS S ON UI.UserId = S.UserId",
-        "    LEFT JOIN dbo.Details AS D ON UI.UserId = D.StudentNo",
-        "    WHERE UI.FirstName = '<FirstName>' AND UI.LastName = '<LastName>';",
+        "  - MANDATORY: Call stored procedure `dbo.SIS_Students_GetStudentDetailsByUserId` using all 17 parameters:",
+        "    DECLARE @UserId INT = (SELECT TOP 1 UserId FROM dbo.UserInfo WHERE FirstName = '<FirstName>' AND LastName = '<LastName>');",
+        "    EXEC dbo.SIS_Students_GetStudentDetailsByUserId @UserId = @UserId, @StudentStatusID = NULL, @GenderListId = NULL, @TeacherRoleId = NULL, @NameTitle = NULL, @AddressTypeListId = NULL, @StudentProgramStatusListID = NULL, @StudentCredentialAwarded = NULL, @StudentCredentialStatus = NULL, @StudentStatusListId = NULL, @PaymentMethods = NULL, @StudentApplyAmountTo = NULL, @CustomFieldsStudent = NULL, @LicensureExamNameListId = NULL, @LicensureExamStatusListId = NULL, @StudentJobPlacementWagesListId = NULL, @StudentJobPlacementEmploymentHoursListId = NULL;",
         "  - For attendance data, also LEFT JOIN dbo.SIS_Attendance AS A ON UI.UserId = A.UserId with CASE WHEN A.Status = 1 OR A.Status = 'true' THEN 'Present' ELSE 'Absent' END AS AttendanceStatus.",
         "  - For fee data, also LEFT JOIN dbo.SIS_Accounting_Financials_T AS F ON F.ApplyAmountToId = UI.UserId."
     ]
