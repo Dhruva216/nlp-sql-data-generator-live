@@ -77,13 +77,11 @@ def generate_sql_sync(
         "  - Join `dbo.SIS_Accounting_Financials_T` with `dbo.UserInfo` (or `dbo.Student`) on `dbo.SIS_Accounting_Financials_T.ApplyAmountToId = dbo.UserInfo.UserId` to link student names to their fee details.",
         "CRITICAL FOR INDIVIDUAL STUDENT DETAILS:",
         "  - When full or individual student profile/details are requested for a specific student (by name or UserId):",
-        "  - STEP 1: Look up the student's UserId: DECLARE @UserId INT = (SELECT TOP 1 UserId FROM dbo.UserInfo WHERE FirstName = '<FirstName>' AND LastName = '<LastName>');",
-        "  - STEP 2: Call stored procedure with required filter parameters: EXEC dbo.SIS_Students_GetStudentDetailsByUserId @UserId = @UserId, @StudentStatusID = NULL, @GenderListId = NULL, @TeacherRoleId = NULL, @NameTitle = NULL, @AddressTypeListId = NULL, @StudentProgramStatusListID = NULL;",
-        "  - IMPORTANT: Always include @StudentStatusID = NULL, @GenderListId = NULL, @TeacherRoleId = NULL, @NameTitle = NULL, @AddressTypeListId = NULL, and @StudentProgramStatusListID = NULL in the EXEC call.",
-        "  - The stored procedure is read-only and returns comprehensive student profile data.",
-        "  - For attendance data not in the stored procedure, query dbo.SIS_Attendance joined on UserId with CASE WHEN Status = 1 OR Status = 'true' THEN 'Present' ELSE 'Absent' END.",
-        "  - For fee data not in the stored procedure, query dbo.SIS_Accounting_Financials_T joined on ApplyAmountToId = UserId.",
-        "  - If the stored procedure encounters missing parameter errors, fall back to direct query: SELECT UI.*, S.*, D.* FROM dbo.UserInfo AS UI JOIN dbo.Student AS S ON UI.UserId = S.UserId LEFT JOIN dbo.Details AS D ON UI.UserId = D.StudentNo WHERE UI.FirstName = '<FirstName>' AND UI.LastName = '<LastName>'."
+        "  - Option 1 (Direct SELECT - Recommended & Reliable): SELECT UI.*, S.*, D.* FROM dbo.UserInfo AS UI JOIN dbo.Student AS S ON UI.UserId = S.UserId LEFT JOIN dbo.Details AS D ON UI.UserId = D.StudentNo WHERE UI.FirstName = '<FirstName>' AND UI.LastName = '<LastName>'.",
+        "  - Option 2 (Stored Procedure): DECLARE @UserId INT = (SELECT TOP 1 UserId FROM dbo.UserInfo WHERE FirstName = '<FirstName>' AND LastName = '<LastName>'); EXEC dbo.SIS_Students_GetStudentDetailsByUserId @UserId = @UserId, @StudentStatusID = NULL, @GenderListId = NULL, @TeacherRoleId = NULL, @NameTitle = NULL, @AddressTypeListId = NULL, @StudentProgramStatusListID = NULL, @StudentCredentialAwarded = NULL;",
+        "  - If stored procedure parameters are incomplete or fail, ALWAYS use Option 1 (Direct SELECT query).",
+        "  - For attendance data, query dbo.SIS_Attendance joined on UserId with CASE WHEN Status = 1 OR Status = 'true' THEN 'Present' ELSE 'Absent' END AS AttendanceStatus.",
+        "  - For fee data, query dbo.SIS_Accounting_Financials_T joined on ApplyAmountToId = UserId."
     ]
     if settings.custom_instructions:
         system_lines.append("\nAdditional Custom Rules and Examples:\n" + settings.custom_instructions)
