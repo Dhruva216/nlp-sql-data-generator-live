@@ -13,6 +13,19 @@ GENDER_MAP = {
     "255": "Female",
 }
 
+ATTENDANCE_MAP = {
+    1: "Present",
+    "1": "Present",
+    True: "Present",
+    "true": "Present",
+    "TRUE": "Present",
+    0: "Absent",
+    "0": "Absent",
+    False: "Absent",
+    "false": "Absent",
+    "FALSE": "Absent",
+}
+
 
 def sanitize_row_value(val: object, col_name: str = "") -> object:
     if isinstance(val, bytes):
@@ -23,9 +36,14 @@ def sanitize_row_value(val: object, col_name: str = "") -> object:
                 return "0x" + val.hex().upper()
             return f"<binary data: {len(val)} bytes>"
 
-    if col_name.lower() in ("gender", "studentgender", "gendercode", "genderid"):
+    c_low = col_name.lower()
+    if c_low in ("gender", "studentgender", "gendercode", "genderid"):
         if val in GENDER_MAP:
             return GENDER_MAP[val]
+
+    if "attend" in c_low:
+        if val in ATTENDANCE_MAP:
+            return ATTENDANCE_MAP[val]
 
     return val
 
