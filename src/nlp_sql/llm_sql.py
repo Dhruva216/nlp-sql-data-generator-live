@@ -77,10 +77,9 @@ def generate_sql_sync(
         "  - Join `dbo.SIS_Accounting_Financials_T` with `dbo.UserInfo` (or `dbo.Student`) on `dbo.SIS_Accounting_Financials_T.ApplyAmountToId = dbo.UserInfo.UserId` to link student names to their fee details.",
         "CRITICAL FOR INDIVIDUAL STUDENT DETAILS:",
         "  - When full or individual student profile/details are requested for a specific student (by name or UserId):",
-        "  - MANDATORY: ALWAYS call stored procedure `dbo.SIS_Students_GetStudentDetailsByUserId` as it returns complete student details.",
-        "  - Use this exact T-SQL structure:",
+        "  - MANDATORY: ALWAYS call stored procedure `dbo.SIS_Students_GetStudentDetailsByUserId` using all 17 parameters:",
         "    DECLARE @UserId INT = (SELECT TOP 1 UserId FROM dbo.UserInfo WHERE FirstName = '<FirstName>' AND LastName = '<LastName>');",
-        "    EXEC dbo.SIS_Students_GetStudentDetailsByUserId @UserId = @UserId, @StudentStatusID = NULL, @GenderListId = NULL, @TeacherRoleId = NULL, @NameTitle = NULL, @AddressTypeListId = NULL, @StudentProgramStatusListID = NULL, @StudentCredentialAwarded = NULL, @StudentCredentialStatus = NULL, @StudentStatusListId = NULL, @PaymentMethods = NULL;",
+        "    EXEC dbo.SIS_Students_GetStudentDetailsByUserId @UserId = @UserId, @StudentStatusID = NULL, @GenderListId = NULL, @TeacherRoleId = NULL, @NameTitle = NULL, @AddressTypeListId = NULL, @StudentProgramStatusListID = NULL, @StudentCredentialAwarded = NULL, @StudentCredentialStatus = NULL, @StudentStatusListId = NULL, @PaymentMethods = NULL, @StudentApplyAmountTo = NULL, @CustomFieldsStudent = NULL, @LicensureExamNameListId = NULL, @LicensureExamStatusListId = NULL, @StudentJobPlacementWaiverListId = NULL, @StudentJobPlacementEmploymentStatusListId = NULL;",
         "  - For attendance data (which is not in the stored procedure), also query dbo.SIS_Attendance joined on UserId.",
         "  - For fee data (which is not in the stored procedure), also query dbo.SIS_Accounting_Financials_T joined on ApplyAmountToId = UserId."
     ]
