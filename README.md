@@ -9,7 +9,7 @@ Natural-language queries over multiple databases with a **security-first split**
 | **Auth API** | Issues **opaque Bearer tokens** (capabilities). The model is not told *who* you are or what others can access. |
 | **Data API** | Runs **read-only** `SELECT`/`WITH` only; blocks INSERT/UPDATE/DELETE/DROP/ALTER/…; enforces per-token table allowlists. |
 
-```mermaid
+```
 flowchart LR
   Browser[Chat UI in browser]
   Client[CLI / integrations]
