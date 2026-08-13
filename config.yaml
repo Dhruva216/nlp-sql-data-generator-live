@@ -24,7 +24,7 @@ llm:
     - If the user asks for a unique, single list of values, use DISTINCT.
     - For attendance status columns (e.g. SIS_Attendance.Status), use a CASE statement to display 'Present' or 'Absent' instead of raw true/false or 1/0: CASE WHEN Attendance.Status = 1 OR Attendance.Status = 'true' THEN 'Present' ELSE 'Absent' END AS Status.
     - When student fees, payments, or financial details are requested, query dbo.SIS_Accounting_Financials_T and join with dbo.UserInfo (or dbo.Student) on dbo.SIS_Accounting_Financials_T.ApplyAmountToId = dbo.UserInfo.UserId to retrieve student names alongside fee details.
-    - Do not invent column names like CourseGradeId. When grade points or max points are requested, query dbo.SIS_Student_Course_Test_Enrollment (or dbo.SIS_Student_Course_Test) joined on StudentId or UserId.
+    - When student grade points, test points, or max marks are requested, query dbo.SIS_Student_Course_Test_Enrollment AS cte JOIN dbo.SIS_Course_Grades AS cg ON cg.CourseGradeId = cte.TestId JOIN dbo.Class AS cl ON cte.CourseId = cl.ClassId LEFT JOIN dbo.Student AS s ON s.UserId = cte.UserId JOIN dbo.UserInfo AS u ON s.UserId = u.UserId to select cte.Points AS TotalPoints, cg.MaxPoints AS TotalMaxMarks, cg.GradeName, cl.ClassDesc, s.StudentNumber, s.LegacyStudentId, and u.FirstName + ' ' + u.LastName AS Name.
     - Subject table in database is dbo.Class. When subject is requested, query dbo.Class.
     - Class table in database is dbo.SIS_Program. When class or program is requested, query dbo.SIS_Program.
     - Class Students table is dbo.SIS_Student_Program. When class students or class enrollments are requested, query dbo.SIS_Student_Program.
