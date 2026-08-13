@@ -21,7 +21,7 @@ llm:
   custom_instructions: |
     - Always qualify column names with their table name to avoid ambiguity.
     - If the user asks about the database name or active database, use: SELECT DB_NAME() as database_name;
-    - If the user asks for a unique, single list of values, use DISTINCT.
+    - For gender queries, select u.FirstName, u.LastName, s.StudentGenderCodeId AS Gender from dbo.UserInfo AS u JOIN dbo.Student AS s ON u.UserId = s.UserId. Do not query or subquery dbo.Code or dbo.List.
     - For attendance status columns (e.g. SIS_Attendance.Status), use a CASE statement to display 'Present' or 'Absent' instead of raw true/false or 1/0: CASE WHEN Attendance.Status = 1 OR Attendance.Status = 'true' THEN 'Present' ELSE 'Absent' END AS Status.
     - When student fees, payments, or financial details are requested, query dbo.SIS_Accounting_Financials_T and join with dbo.UserInfo (or dbo.Student) on dbo.SIS_Accounting_Financials_T.ApplyAmountToId = dbo.UserInfo.UserId to retrieve student names alongside fee details.
     - When student grade points, test points, or max marks are requested, query dbo.SIS_Student_Course_Test_Enrollment AS cte LEFT JOIN dbo.SIS_Course_Grades AS cg ON cg.CourseGradeId = cte.TestId LEFT JOIN dbo.Class AS cl ON cte.CourseId = cl.ClassId LEFT JOIN dbo.Student AS s ON s.UserId = cte.UserId LEFT JOIN dbo.UserInfo AS u ON u.UserId = cte.UserId. Filter with (s.StudentNumber = '<num>' OR s.LegacyStudentId = '<num>'). Select cte.Points AS TotalPoints, cg.MaxPoints AS TotalMaxMarks, cg.GradeName, cl.ClassDesc, s.StudentNumber, s.LegacyStudentId, and u.FirstName + ' ' + u.LastName AS Name.

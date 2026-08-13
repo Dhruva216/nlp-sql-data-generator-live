@@ -251,8 +251,10 @@ function renderAssistantResponse(data) {
       html += `<p class="meta">${metaText}</p>`;
     }
   }
-  if (data.column_names?.length) {
-    html += renderTable(data.column_names, data.rows || []);
+  if (data.column_names?.length && data.rows?.length) {
+    html += renderTable(data.column_names, data.rows);
+  } else if (data.sql) {
+    html += `<p class="meta" style="color: var(--text-muted); font-style: italic; margin-top: 10px;">⚠️ Query executed successfully, but 0 matching records were found in the database.</p>`;
   }
   return html;
 }
