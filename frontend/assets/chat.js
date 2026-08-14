@@ -274,7 +274,21 @@ function printReport(btn) {
 
   document.body.classList.remove("printing-mode");
   msgDiv.classList.remove("printing-target");
-}
+window.exportTableToExcel = exportTableToExcel;
+window.printReport = printReport;
+
+document.addEventListener("click", (e) => {
+  const excelBtn = e.target.closest(".excel-btn");
+  if (excelBtn) {
+    exportTableToExcel(excelBtn);
+    return;
+  }
+  const printBtn = e.target.closest(".print-btn");
+  if (printBtn) {
+    printReport(printBtn);
+    return;
+  }
+});
 
 function renderAssistantResponse(data) {
   let html = "";
