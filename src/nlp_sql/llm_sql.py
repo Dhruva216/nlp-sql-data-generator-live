@@ -48,6 +48,8 @@ def generate_sql_sync(
     schema_context: str,
     database_ids: list[str],
     settings: LLMSettings,
+    role_id: int | None = 1,
+    user_id: int | None = 296,
 ) -> tuple[str, str, str | None, dict[str, int]]:
     """Call OpenAI-compatible chat API; return (database_id, sql, explanation, usage)."""
     system_lines = [
