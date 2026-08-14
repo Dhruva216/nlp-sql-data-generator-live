@@ -274,6 +274,8 @@ function printReport(btn) {
 
   document.body.classList.remove("printing-mode");
   msgDiv.classList.remove("printing-target");
+}
+
 window.exportTableToExcel = exportTableToExcel;
 window.printReport = printReport;
 
@@ -403,4 +405,3 @@ function init() {
 }
 
 init();
-
