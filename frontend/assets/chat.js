@@ -228,6 +228,54 @@ function renderTable(columns, rows) {
   return `<div class="data-table-wrap"><table class="data-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
+function exportTableToExcel(btn) {
+  const bubble = btn.closest(".bubble");
+  if (!bubble) return;
+  const table = bubble.querySelector("table.data-table");
+  if (!table) return;
+
+  const rows = [];
+  table.querySelectorAll("tr").forEach((tr) => {
+    const row = [];
+    tr.querySelectorAll("th, td").forEach((td) => {
+      let cellText = td.innerText.replace(/"/g, '""');
+      row.push(`"${cellText}"`);
+    });
+    if (row.length > 0) {
+      rows.push(row.join(","));
+    }
+  });
+
+  const csvContent = "\ufeff" + rows.join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  link.setAttribute("href", url);
+  link.setAttribute("download", `Report_Export_${timestamp}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function printReport(btn) {
+  const msgDiv = btn.closest(".msg");
+  if (!msgDiv) {
+    window.print();
+    return;
+  }
+
+  document.querySelectorAll(".msg.printing-target").forEach((el) => el.classList.remove("printing-target"));
+  msgDiv.classList.add("printing-target");
+  document.body.classList.add("printing-mode");
+
+  window.print();
+
+  document.body.classList.remove("printing-mode");
+  msgDiv.classList.remove("printing-target");
+}
+
 function renderAssistantResponse(data) {
   let html = "";
   if (data.explanation) {
@@ -237,8 +285,8 @@ function renderAssistantResponse(data) {
   } else {
     html += `<p>${escapeHtml(data.explanation || "No SQL was generated.")}</p>`;
   }
+
   if (data.sql) {
-    html += `<pre class="sql-block">${escapeHtml(data.sql)}</pre>`;
     let metaText = "";
     if (data.database_ids_used?.length) {
       metaText += `Database: ${escapeHtml(data.database_ids_used.join(", "))}`;
@@ -247,14 +295,36 @@ function renderAssistantResponse(data) {
       if (metaText) metaText += " &nbsp;·&nbsp; ";
       metaText += `Tokens: <strong>${fmtNum(data.llm_usage.total_tokens)}</strong> (Prompt: ${fmtNum(data.llm_usage.prompt_tokens)} | Completion: ${fmtNum(data.llm_usage.completion_tokens)})`;
     }
-    if (metaText) {
-      html += `<p class="meta">${metaText}</p>`;
-    }
+
+    /* Collapsible SQL Query block — hidden by default, accessible via click */
+    html += `
+      <details class="sql-details">
+        <summary class="sql-summary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          View Generated SQL Query
+        </summary>
+        <pre class="sql-block">${escapeHtml(data.sql)}</pre>
+        ${metaText ? `<p class="meta" style="margin-top: 0.4rem; padding: 0 0.75rem 0.5rem;">${metaText}</p>` : ""}
+      </details>
+    `;
   }
+
   if (data.column_names?.length && data.rows?.length) {
+    html += `
+      <div class="report-toolbar">
+        <button type="button" class="action-btn excel-btn" onclick="exportTableToExcel(this)" title="Export report table to Excel (.csv)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export to Excel
+        </button>
+        <button type="button" class="action-btn print-btn" onclick="printReport(this)" title="Print report or save as PDF">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print Report
+        </button>
+      </div>
+    `;
     html += renderTable(data.column_names, data.rows);
   } else if (data.sql) {
-    html += `<p class="meta" style="color: var(--text-muted); font-style: italic; margin-top: 10px;">⚠️ Query executed successfully, but 0 matching records were found in the database.</p>`;
+    html += `<p class="meta" style="color: var(--muted); font-style: italic; margin-top: 10px;">⚠️ Query executed successfully, but 0 matching records were found in the database.</p>`;
   }
   return html;
 }

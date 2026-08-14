@@ -478,3 +478,146 @@ table.data-table tr:last-child td {
     overflow-y: auto;
   }
 }
+
+/* Collapsible SQL Query Details */
+.sql-details {
+  margin-top: 0.6rem;
+  margin-bottom: 0.6rem;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.sql-summary {
+  display: flex;
+  align-items: center;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s, background 0.15s;
+}
+
+.sql-summary:hover {
+  color: var(--accent);
+  background: var(--surface-2);
+}
+
+.sql-details[open] .sql-summary {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.sql-details .sql-block {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* Report Action Toolbar (Export / Print) */
+.report-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.action-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(61, 156, 245, 0.3);
+}
+
+.action-btn.excel-btn:hover {
+  background: #107c41; /* Excel green accent */
+  border-color: #107c41;
+  box-shadow: 0 2px 8px rgba(16, 124, 65, 0.4);
+}
+
+.action-btn.print-btn:hover {
+  background: #0078d4;
+  border-color: #0078d4;
+  box-shadow: 0 2px 8px rgba(0, 120, 212, 0.4);
+}
+
+/* Print Stylesheet */
+@media print {
+  body.printing-mode .sidebar,
+  body.printing-mode .chat-header,
+  body.printing-mode .composer,
+  body.printing-mode .report-toolbar,
+  body.printing-mode .sql-details,
+  body.printing-mode .msg:not(.printing-target) {
+    display: none !important;
+  }
+
+  body.printing-mode {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  body.printing-mode .app {
+    display: block !important;
+    height: auto !important;
+  }
+
+  body.printing-mode .chat-main {
+    display: block !important;
+  }
+
+  body.printing-mode .messages {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  body.printing-mode .msg.printing-target {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-shadow: none !important;
+  }
+
+  body.printing-mode .msg.printing-target .bubble {
+    background: #fff !important;
+    color: #000 !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  body.printing-mode table.data-table {
+    color: #000 !important;
+    border: 1px solid #ccc !important;
+  }
+
+  body.printing-mode table.data-table th {
+    background: #f0f0f0 !important;
+    color: #000 !important;
+    border: 1px solid #ccc !important;
+  }
+
+  body.printing-mode table.data-table td {
+    border: 1px solid #ccc !important;
+  }
+}
