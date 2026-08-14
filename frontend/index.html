@@ -58,6 +58,22 @@
           <button type="button" class="btn ghost" id="disconnectBtn">Disconnect</button>
         </section>
 
+        <section class="panel role-panel" id="rolePanel">
+          <h2>Active User Role</h2>
+          <label>
+            <span>Role Context</span>
+            <select id="roleSelect">
+              <option value="1">👑 Admin (RoleId 1) — Full Access</option>
+              <option value="2" selected>🎓 Student (RoleId 2) — Own Data Only</option>
+              <option value="3">👨‍🏫 Instructor (RoleId 3) — Staff Scope</option>
+            </select>
+          </label>
+          <label id="testUserIdWrap">
+            <span>Student UserId Context</span>
+            <input type="number" id="testUserId" value="296" placeholder="296" />
+          </label>
+        </section>
+
         <section class="panel token-panel" id="tokenPanel">
           <h2>Token Usage</h2>
           <div class="token-model-row">
@@ -137,6 +153,6 @@
       </main>
     </div>
 
-    <script src="/assets/chat.js?v=1.4" type="module"></script>
+    <script src="/assets/chat.js?v=1.5" type="module"></script>
   </body>
 </html>

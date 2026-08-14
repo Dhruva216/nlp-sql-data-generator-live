@@ -26,6 +26,8 @@ def answer_request(
     config: AppConfig | None = None,
     grant: AccessGrant | None = None,
     access_token: str | None = None,
+    role_id: int | None = 1,
+    user_id: int | None = 296,
 ) -> QueryResult:
     """
     Schema-only LLM path + read-only execution via DataService.
@@ -68,7 +70,14 @@ def answer_request(
             explanation="Matched keywords but no schema entries are available for this token.",
         )
 
-    db_id, sql, expl, usage = generate_sql_sync(user_request, schema_text, db_ids, cfg.llm)
+    db_id, sql, expl, usage = generate_sql_sync(
+        user_request,
+        schema_text,
+        db_ids,
+        cfg.llm,
+        role_id=role_id,
+        user_id=user_id,
+    )
 
     cols, rows = data_svc.execute(db_id, sql, grant)
 

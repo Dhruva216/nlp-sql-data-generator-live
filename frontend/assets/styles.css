@@ -105,6 +105,7 @@ label span {
 }
 
 input,
+select,
 textarea {
   width: 100%;
   font: inherit;
@@ -116,6 +117,7 @@ textarea {
 }
 
 input:focus,
+select:focus,
 textarea:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;

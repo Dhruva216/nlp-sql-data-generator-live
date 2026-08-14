@@ -37,6 +37,10 @@ const els = {
   tokenDetailRow: document.getElementById("tokenDetailRow"),
   tokenLastPrompt: document.getElementById("tokenLastPrompt"),
   tokenLastCompletion: document.getElementById("tokenLastCompletion"),
+  /* Role panel */
+  roleSelect: document.getElementById("roleSelect"),
+  testUserId: document.getElementById("testUserId"),
+  testUserIdWrap: document.getElementById("testUserIdWrap"),
 };
 
 function fmtNum(n) {
@@ -352,6 +356,9 @@ async function sendQuestion(text) {
     return;
   }
 
+  const role_id = parseInt(els.roleSelect?.value || "1", 10);
+  const user_id = parseInt(els.testUserId?.value || "296", 10);
+
   appendMessage("user", `<p>${escapeHtml(text)}</p>`);
   const loading = appendMessage("assistant", "<p>Thinking…</p>", "loading");
 
@@ -359,7 +366,7 @@ async function sendQuestion(text) {
     const data = await fetchJson("/v1/nlp/query", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, role_id, user_id }),
     });
     loading.remove();
     appendMessage("assistant", renderAssistantResponse(data));
@@ -374,6 +381,12 @@ async function sendQuestion(text) {
   }
 }
 
+function updateRoleUI() {
+  if (!els.roleSelect || !els.testUserIdWrap) return;
+  const isStudent = els.roleSelect.value === "2";
+  els.testUserIdWrap.hidden = !isStudent;
+}
+
 function init() {
   const state = loadState();
   els.apiBase.value = state.apiBase || window.location.origin;
@@ -383,6 +396,11 @@ function init() {
     setConnected(true);
   } else {
     setConnected(false);
+  }
+
+  updateRoleUI();
+  if (els.roleSelect) {
+    els.roleSelect.addEventListener("change", updateRoleUI);
   }
 
   els.connectBtn.addEventListener("click", connect);

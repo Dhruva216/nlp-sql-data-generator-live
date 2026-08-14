@@ -51,12 +51,8 @@ def generate_sql_sync(
 ) -> tuple[str, str, str | None, dict[str, int]]:
     """Call OpenAI-compatible chat API; return (database_id, sql, explanation, usage)."""
     system_lines = [
-        "You are a SQL author that only sees database SCHEMA (table and column names/types).",
-        "You do NOT have direct database access and you must NEVER assume or invent row values.",
-        "Your SQL will be submitted to a secure read-only API that enforces permissions and blocks "
-        "INSERT, UPDATE, DELETE, DROP, ALTER, and all other write/DDL operations.",
-        "Read the dialect name listed next to the Database ID in the schema context, and follow its syntax rules:",
-        "  - If dialect is 'mssql' (SQL Server): Use T-SQL syntax. Use SELECT TOP N instead of LIMIT. Use T-SQL functions like DB_NAME() where appropriate.",
+        "You translate natural language to SQL. Follow database limits and dialect rules.",
+        "  - If dialect is 'mssql': Use T-SQL (TOP N, GETDATE(), ISNULL(), string concat with +).",
         "  - If dialect is 'sqlite': Use standard SQLite syntax and functions.",
         "Output a single JSON object only, no markdown, with keys:",
         '  "database_id" (one of the allowed ids), "sql" (one read-only SELECT, WITH, DECLARE, or EXEC query), ',
@@ -93,6 +89,32 @@ def generate_sql_sync(
         "  - For attendance data, also LEFT JOIN dbo.SIS_Attendance AS A ON UI.UserId = A.UserId with CASE WHEN A.Status = 1 OR A.Status = 'true' THEN 'Present' ELSE 'Absent' END AS AttendanceStatus.",
         "  - For fee data, also LEFT JOIN dbo.SIS_Accounting_Financials_T AS F ON F.ApplyAmountToId = UI.UserId."
     ]
+
+    # Inject Role-Based Access Control (RBAC) constraints
+    active_role = role_id if role_id is not None else 1
+    active_uid = user_id if user_id is not None else 296
+
+    if active_role == 2:  # Student Role (RoleId = 2)
+        system_lines.append(
+            f"\nCRITICAL ROLE-BASED SECURITY CONSTRAINT (ROLE = STUDENT, ROLEID = 2):\n"
+            f"  - Active User: STUDENT (RoleId = 2, UserId = {active_uid}).\n"
+            f"  - MANDATORY SECURITY CONSTRAINT: The active user is a Student. You MUST strictly scope and filter ALL queries so that only data belonging to UserId = {active_uid} is retrieved.\n"
+            f"  - The student MUST NEVER see, query, list, or access data, grades, attendance, fees, or profiles belonging to any other students.\n"
+            f"  - For individual profile/details requests, run: EXEC dbo.SIS_Students_GetStudentDetailsByUserId @UserId = {active_uid}, @StudentStatusID = NULL, @GenderListId = NULL, @TeacherRoleId = NULL, @NameTitle = NULL, @AddressTypeListId = NULL, @StudentProgramStatusListID = NULL, @StudentCredentialAwarded = NULL, @StudentCredentialStatus = NULL, @StudentStatusListId = NULL, @PaymentMethods = NULL, @StudentApplyAmountTo = NULL, @CustomFieldsStudent = NULL, @LicensureExamNameListId = NULL, @LicensureExamStatusListId = NULL, @StudentJobPlacementWagesListId = NULL, @StudentJobPlacementEmploymentHoursListId = NULL;\n"
+            f"  - For all other queries (grades, fees, attendance, etc.), ALWAYS append a filter restricting the query strictly to `UserId = {active_uid}` (or `ApplyAmountToId = {active_uid}`)."
+        )
+    elif active_role == 3:  # Instructor Role (RoleId = 3)
+        system_lines.append(
+            "\nCRITICAL ROLE-BASED ACCESS CONTROL (ROLE = INSTRUCTOR, ROLEID = 3):\n"
+            "  - Active User: INSTRUCTOR (RoleId = 3).\n"
+            "  - Access is scoped to academic performance, classes, and subjects assigned to staff."
+        )
+    else:  # Admin Role (RoleId = 1)
+        system_lines.append(
+            "\nCRITICAL ROLE-BASED ACCESS CONTROL (ROLE = ADMIN, ROLEID = 1):\n"
+            "  - Active User: ADMIN (RoleId = 1).\n"
+            "  - User has full administrative access to query all student records, classes, subjects, and system reports across the entire database."
+        )
     if settings.custom_instructions:
         system_lines.append("\nAdditional Custom Rules and Examples:\n" + settings.custom_instructions)
     system = "\n".join(system_lines)

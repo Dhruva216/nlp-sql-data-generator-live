@@ -15,6 +15,8 @@ router = APIRouter()
 
 class NlpQueryRequest(BaseModel):
     text: str = Field(..., min_length=1, description="Natural language question")
+    role_id: Optional[int] = Field(default=1, description="Active Role ID (1=Admin, 2=Student, 3=Instructor)")
+    user_id: Optional[int] = Field(default=296, description="Active User ID for student scoping (e.g. 296 for Suraj Demo)")
 
 
 class NlpQueryResponse(BaseModel):
@@ -35,7 +37,13 @@ def nlp_query(
 ) -> NlpQueryResponse:
     """LLM sees schema only; execution uses the data API layer with your token (server-side)."""
     try:
-        result = answer_request(body.text, config=config, grant=grant)
+        result = answer_request(
+            body.text,
+            config=config,
+            grant=grant,
+            role_id=body.role_id,
+            user_id=body.user_id,
+        )
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e)) from e
     except FileNotFoundError as e:
