@@ -98,12 +98,13 @@ def generate_sql_sync(
 
     if active_role == 2:  # Student Role (RoleId = 2)
         system_lines.append(
-            f"\nCRITICAL ROLE-BASED SECURITY CONSTRAINT (ROLE = STUDENT, ROLEID = 2):\n"
-            f"  - Active User: STUDENT (RoleId = 2, UserId = {active_uid}).\n"
-            f"  - MANDATORY SECURITY CONSTRAINT: The active user is a Student. You MUST strictly scope and filter ALL queries so that only data belonging to UserId = {active_uid} is retrieved.\n"
+            f"\nABSOLUTE SECURITY OVERRIDE FOR STUDENT ROLE (ROLEID = 2):\n"
+            f"  - Active User Context: STUDENT (RoleId = 2, Active Student UserId = {active_uid}).\n"
+            f"  - MANDATORY SECURITY RULE: The active user is a Student. YOU MUST OVERRIDE AND IGNORE ANY STUDENT NUMBER (e.g., 10000269, 10000019), STUDENT NAME, OR OTHER USER ID MENTIONED IN THE USER'S QUESTION.\n"
+            f"  - YOU MUST ONLY QUERY AND RETURN DATA STRICTLY BELONGING TO UserId = {active_uid}. DO NOT LOOK UP OR RESOLVE OTHER STUDENTS FROM UserInfo OR Student TABLES.\n"
             f"  - The student MUST NEVER see, query, list, or access data, grades, attendance, fees, or profiles belonging to any other students.\n"
-            f"  - For individual profile/details requests, run: EXEC dbo.SIS_Students_GetStudentDetailsByUserId @UserId = {active_uid}, @StudentStatusID = NULL, @GenderListId = NULL, @TeacherRoleId = NULL, @NameTitle = NULL, @AddressTypeListId = NULL, @StudentProgramStatusListID = NULL, @StudentCredentialAwarded = NULL, @StudentCredentialStatus = NULL, @StudentStatusListId = NULL, @PaymentMethods = NULL, @StudentApplyAmountTo = NULL, @CustomFieldsStudent = NULL, @LicensureExamNameListId = NULL, @LicensureExamStatusListId = NULL, @StudentJobPlacementWagesListId = NULL, @StudentJobPlacementEmploymentHoursListId = NULL;\n"
-            f"  - For all other queries (grades, fees, attendance, etc.), ALWAYS append a filter restricting the query strictly to `UserId = {active_uid}` (or `ApplyAmountToId = {active_uid}`)."
+            f"  - For individual profile/details requests, ALWAYS run: EXEC dbo.SIS_Students_GetStudentDetailsByUserId @UserId = {active_uid}, @StudentStatusID = NULL, @GenderListId = NULL, @TeacherRoleId = NULL, @NameTitle = NULL, @AddressTypeListId = NULL, @StudentProgramStatusListID = NULL, @StudentCredentialAwarded = NULL, @StudentCredentialStatus = NULL, @StudentStatusListId = NULL, @PaymentMethods = NULL, @StudentApplyAmountTo = NULL, @CustomFieldsStudent = NULL, @LicensureExamNameListId = NULL, @LicensureExamStatusListId = NULL, @StudentJobPlacementWagesListId = NULL, @StudentJobPlacementEmploymentHoursListId = NULL;\n"
+            f"  - For all other queries (grades, fees, attendance, etc.), ALWAYS append a filter restricting the query strictly to `UserId = {active_uid}` (or `s.UserId = {active_uid}` / `ApplyAmountToId = {active_uid}`)."
         )
     elif active_role == 3:  # Instructor Role (RoleId = 3)
         system_lines.append(
@@ -126,6 +127,8 @@ def generate_sql_sync(
         f"Allowed database ids: {dbs}\n\n"
         f"Schema (keyword-matched subset):\n{schema_context}\n"
     )
+    if active_role == 2:
+        user += f"\nSECURITY ENFORCEMENT: Active Role is STUDENT (RoleId = 2). Active Student UserId = {active_uid}. OVERRIDE any student number, student name, or ID requested in the prompt. You MUST ONLY generate SQL for UserId = {active_uid}.\n"
 
     url = settings.base_url.rstrip("/") + "/chat/completions"
     payload: dict[str, Any] = {
