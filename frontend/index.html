@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/assets/styles.css?v=1.4" />
+    <link rel="stylesheet" href="/assets/styles.css?v=1.6" />
   </head>
   <body>
     <div class="app" id="app">
@@ -80,19 +80,6 @@
             <span class="token-label">Model</span>
             <span class="token-value" id="tokenModelName">gemma4:31b-cloud</span>
           </div>
-          <div class="token-model-row">
-            <span class="token-label">Context Window</span>
-            <span class="token-value" id="tokenContextLimit">131,072 tokens</span>
-          </div>
-          <div class="token-bar-header">
-            <span class="token-label">Context Window Used (Query)</span>
-            <span class="token-bar-pct" id="tokenBarPct">0.00%</span>
-          </div>
-          <div class="token-bar-container">
-            <div class="token-bar-wrap">
-              <div class="token-bar" id="tokenBar" style="width: 0%"></div>
-            </div>
-          </div>
           <div class="token-stats">
             <div class="token-stat">
               <span class="token-stat-num" id="tokenSessionTotal">0</span>
@@ -153,6 +140,6 @@
       </main>
     </div>
 
-    <script src="/assets/chat.js?v=1.5" type="module"></script>
+    <script src="/assets/chat.js?v=1.6" type="module"></script>
   </body>
 </html>

@@ -28,9 +28,6 @@ const els = {
   /* Token panel */
   tokenPanel: document.getElementById("tokenPanel"),
   tokenModelName: document.getElementById("tokenModelName"),
-  tokenContextLimit: document.getElementById("tokenContextLimit"),
-  tokenBar: document.getElementById("tokenBar"),
-  tokenBarPct: document.getElementById("tokenBarPct"),
   tokenSessionTotal: document.getElementById("tokenSessionTotal"),
   tokenLastQuery: document.getElementById("tokenLastQuery"),
   tokenQueryCount: document.getElementById("tokenQueryCount"),
@@ -56,19 +53,10 @@ function updateTokenPanel(usage) {
   }
 
   els.tokenModelName.textContent = MODEL_DISPLAY_NAME;
-  els.tokenContextLimit.textContent = fmtNum(MODEL_CONTEXT_LIMIT) + " tokens";
 
   els.tokenSessionTotal.textContent = fmtNum(sessionTokens.total);
   els.tokenLastQuery.textContent = usage ? fmtNum(usage.total_tokens) : "0";
   els.tokenQueryCount.textContent = sessionTokens.queryCount;
-
-  /* Progress bar — dynamically shows actual query context usage (prompt tokens) as % of context limit */
-  const queryPromptTokens = usage ? usage.prompt_tokens : 0;
-  const pct = Math.min((queryPromptTokens / MODEL_CONTEXT_LIMIT) * 100, 100);
-  els.tokenBar.style.width = pct.toFixed(2) + "%";
-  els.tokenBarPct.textContent = pct.toFixed(2) + "%";
-  els.tokenBar.classList.toggle("warn", pct > 75);
-  els.tokenBarPct.style.color = pct > 75 ? "var(--error)" : "var(--accent)";
 
   /* Detail breakdown */
   if (usage && usage.total_tokens > 0) {
@@ -80,9 +68,6 @@ function updateTokenPanel(usage) {
 
 function resetTokenPanel() {
   sessionTokens = { prompt: 0, completion: 0, total: 0, queryCount: 0 };
-  els.tokenBar.style.width = "0%";
-  els.tokenBarPct.textContent = "0.00%";
-  els.tokenBar.classList.remove("warn");
   els.tokenSessionTotal.textContent = "0";
   els.tokenLastQuery.textContent = "0";
   els.tokenQueryCount.textContent = "0";
