@@ -11,6 +11,7 @@ from nlp_sql.gateway.data_service import DataService
 from nlp_sql.gateway.schema_service import SchemaService
 from nlp_sql.llm_sql import generate_sql_sync
 from nlp_sql.models import QueryResult
+from nlp_sql.rules_store import RulesStore
 
 
 def _bootstrap_env() -> None:
@@ -70,6 +71,10 @@ def answer_request(
             explanation="Matched keywords but no schema entries are available for this token.",
         )
 
+    # Fetch dynamic database rules from dbo.NLP_SQL_Rules (if available)
+    db_rules = RulesStore.get_active_rules(cfg, role_id=role_id)
+    dynamic_rule_texts = [r.rule_content for r in db_rules]
+
     db_id, sql, expl, usage = generate_sql_sync(
         user_request,
         schema_text,
@@ -77,6 +82,7 @@ def answer_request(
         cfg.llm,
         role_id=role_id,
         user_id=user_id,
+        dynamic_rules=dynamic_rule_texts if dynamic_rule_texts else None,
     )
 
     cols, rows = data_svc.execute(db_id, sql, grant)

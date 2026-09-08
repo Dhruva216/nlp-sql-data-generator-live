@@ -50,6 +50,7 @@ def generate_sql_sync(
     settings: LLMSettings,
     role_id: int | None = 1,
     user_id: int | None = 296,
+    dynamic_rules: list[str] | None = None,
 ) -> tuple[str, str, str | None, dict[str, int]]:
     """Call OpenAI-compatible chat API; return (database_id, sql, explanation, usage)."""
     system_lines = [
@@ -91,6 +92,12 @@ def generate_sql_sync(
         "  - For attendance data, also LEFT JOIN dbo.SIS_Attendance AS A ON UI.UserId = A.UserId with CASE WHEN A.Status = 1 OR A.Status = 'true' THEN 'Present' ELSE 'Absent' END AS AttendanceStatus.",
         "  - For fee data, also LEFT JOIN dbo.SIS_Accounting_Financials_T AS F ON F.ApplyAmountToId = UI.UserId."
     ]
+
+    # Inject dynamic rules fetched from dbo.NLP_SQL_Rules
+    if dynamic_rules:
+        system_lines.append("\nDYNAMIC DATABASE RULES & MAPPINGS (FROM dbo.NLP_SQL_Rules):")
+        for rule in dynamic_rules:
+            system_lines.append(f"  - {rule}")
 
     # Inject Role-Based Access Control (RBAC) constraints
     active_role = role_id if role_id is not None else 1

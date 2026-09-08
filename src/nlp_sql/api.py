@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from nlp_sql.deps import get_app_config
-from nlp_sql.routers import auth, data, nlp, schema
+from nlp_sql.routers import auth, data, nlp, rules, schema
 
 FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
 
@@ -42,6 +42,7 @@ def create_app() -> FastAPI:
     app.include_router(schema.router, prefix="/v1/schema", tags=["schema"])
     app.include_router(data.router, prefix="/v1/data", tags=["data"])
     app.include_router(nlp.router, prefix="/v1/nlp", tags=["nlp"])
+    app.include_router(rules.router, prefix="/v1/rules", tags=["rules"])
 
     @app.get("/health")
     def health() -> dict[str, str]:
