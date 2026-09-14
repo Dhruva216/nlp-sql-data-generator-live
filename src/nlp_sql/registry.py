@@ -64,7 +64,8 @@ def build_engine_for_db(db_id: str, uri: str) -> Engine:
     _ensure_sqlite_parent_dir(resolved)
     connect_args: dict = {}
     if resolved.startswith("mssql"):
-        connect_args["timeout"] = 30
+        connect_args["timeout"] = 5
+        connect_args["login_timeout"] = 5
     return create_engine(
         resolved,
         future=True,
@@ -113,9 +114,16 @@ def load_catalog(config: AppConfig) -> list[DatabaseCatalogEntry]:
     out: list[DatabaseCatalogEntry] = []
     for d in config.databases:
         eng = build_engine_for_db(d.id, d.uri)
-        with eng.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        out.append(reflect_database(d.id, eng))
+        try:
+            with eng.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            out.append(reflect_database(d.id, eng))
+        except Exception as e:
+            uri_display = _mask_password(str(eng.url))
+            raise RuntimeError(
+                f"Unable to connect to database target '{d.id}' ({uri_display}). "
+                f"Please verify the database server is running and reachable. Error: {e}"
+            ) from e
     return out
 
 

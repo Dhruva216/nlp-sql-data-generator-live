@@ -149,10 +149,22 @@ def generate_sql_sync(
     }
     headers = _auth_headers(settings.base_url)
 
-    with httpx.Client(timeout=120.0) as client:
-        r = client.post(url, headers=headers, json=payload)
-        r.raise_for_status()
-        data = r.json()
+    try:
+        with httpx.Client(timeout=60.0) as client:
+            r = client.post(url, headers=headers, json=payload)
+            r.raise_for_status()
+            data = r.json()
+    except httpx.ConnectError as e:
+        raise RuntimeError(
+            f"Could not connect to LLM server at {settings.base_url}. "
+            "Please ensure Ollama or your LLM server is running."
+        ) from e
+    except httpx.HTTPStatusError as e:
+        raise RuntimeError(
+            f"LLM server returned HTTP {e.response.status_code}: {e.response.text[:300]}"
+        ) from e
+    except Exception as e:
+        raise RuntimeError(f"Error calling LLM provider: {e}") from e
 
     usage = data.get("usage", {})
     usage_dict = {
