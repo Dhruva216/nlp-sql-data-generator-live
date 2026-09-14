@@ -64,8 +64,8 @@ def build_engine_for_db(db_id: str, uri: str) -> Engine:
     _ensure_sqlite_parent_dir(resolved)
     connect_args: dict = {}
     if resolved.startswith("mssql"):
-        connect_args["timeout"] = 5
-        connect_args["login_timeout"] = 5
+        connect_args["timeout"] = 30
+        connect_args["login_timeout"] = 10
     return create_engine(
         resolved,
         future=True,
