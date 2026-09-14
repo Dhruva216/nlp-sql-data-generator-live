@@ -14,7 +14,7 @@ execution:
 llm:
   provider: openai_compatible
   base_url: http://127.0.0.1:11434/v1
-  model: gemma4:31b-cloud
+  model: llama3.1:latest
   temperature: 0.1
   max_tokens: 1024
   # Rules, table mappings, and prompt conditions are dynamically managed in database table dbo.NLP_SQL_Rules.
