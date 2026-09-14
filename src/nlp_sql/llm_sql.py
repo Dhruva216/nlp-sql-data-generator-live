@@ -150,14 +150,14 @@ def generate_sql_sync(
     headers = _auth_headers(settings.base_url)
 
     try:
-        with httpx.Client(timeout=60.0) as client:
+        with httpx.Client(timeout=httpx.Timeout(30.0, connect=5.0)) as client:
             r = client.post(url, headers=headers, json=payload)
             r.raise_for_status()
             data = r.json()
-    except httpx.ConnectError as e:
+    except (httpx.ConnectError, httpx.ConnectTimeout) as e:
         raise RuntimeError(
             f"Could not connect to LLM server at {settings.base_url}. "
-            "Please ensure Ollama or your LLM server is running."
+            "Please ensure Ollama is running or configure OpenAI/Bedrock in config.yaml."
         ) from e
     except httpx.HTTPStatusError as e:
         raise RuntimeError(
