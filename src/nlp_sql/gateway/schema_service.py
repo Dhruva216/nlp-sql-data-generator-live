@@ -12,20 +12,23 @@ from nlp_sql.registry import load_catalog
 from nlp_sql.schema_prompt import build_schema_prompt
 
 
+_GLOBAL_CATALOG_CACHE: dict[str, list[DatabaseCatalogEntry]] = {}
+
+
 class SchemaService:
     """Schema metadata only — never returns row data or connection secrets."""
 
     def __init__(self, config: AppConfig) -> None:
         self._config = config
-        self._catalog_cache: list[DatabaseCatalogEntry] | None = None
 
     def _catalog(self) -> list[DatabaseCatalogEntry]:
-        if self._catalog_cache is None:
-            self._catalog_cache = load_catalog(self._config)
-        return self._catalog_cache
+        cache_key = str(id(self._config))
+        if cache_key not in _GLOBAL_CATALOG_CACHE:
+            _GLOBAL_CATALOG_CACHE[cache_key] = load_catalog(self._config)
+        return _GLOBAL_CATALOG_CACHE[cache_key]
 
     def refresh_catalog(self) -> None:
-        self._catalog_cache = None
+        _GLOBAL_CATALOG_CACHE.clear()
         build_engines(self._config)
 
     def search(
