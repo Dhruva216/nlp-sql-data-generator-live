@@ -48,6 +48,10 @@ class RulesStore:
             return None
 
     @classmethod
+    def _table_name(cls, engine: Engine) -> str:
+        return "dbo.NLP_SQL_Rules" if engine.dialect.name == "mssql" else "NLP_SQL_Rules"
+
+    @classmethod
     def get_active_rules(
         cls, config: AppConfig, role_id: int | None = None
     ) -> list[DynamicRule]:
@@ -64,12 +68,13 @@ class RulesStore:
         if engine is None:
             return []
 
+        tbl = cls._table_name(engine)
         try:
             query = text(
-                "SELECT RuleId, Category, RuleName, RuleContent, RoleId, IsActive, DisplayOrder "
-                "FROM dbo.NLP_SQL_Rules "
-                "WHERE IsActive = 1 AND (RoleId IS NULL OR RoleId = :role_id) "
-                "ORDER BY DisplayOrder ASC, RuleId ASC"
+                f"SELECT RuleId, Category, RuleName, RuleContent, RoleId, IsActive, DisplayOrder "
+                f"FROM {tbl} "
+                f"WHERE IsActive = 1 AND (RoleId IS NULL OR RoleId = :role_id) "
+                f"ORDER BY DisplayOrder ASC, RuleId ASC"
             )
             with engine.connect() as conn:
                 res = conn.execute(query, {"role_id": role_id if role_id is not None else 1})
@@ -91,7 +96,7 @@ class RulesStore:
             return rules
         except Exception as e:
             # Fallback gracefully if table does not exist yet or query fails
-            logger.info(f"dbo.NLP_SQL_Rules table query fallback: {e}")
+            logger.info(f"{tbl} table query fallback: {e}")
             return []
 
     @classmethod
@@ -101,11 +106,12 @@ class RulesStore:
         if engine is None:
             return []
 
+        tbl = cls._table_name(engine)
         try:
             query = text(
-                "SELECT RuleId, Category, RuleName, RuleContent, RoleId, IsActive, DisplayOrder "
-                "FROM dbo.NLP_SQL_Rules "
-                "ORDER BY Category ASC, DisplayOrder ASC, RuleId ASC"
+                f"SELECT RuleId, Category, RuleName, RuleContent, RoleId, IsActive, DisplayOrder "
+                f"FROM {tbl} "
+                f"ORDER BY Category ASC, DisplayOrder ASC, RuleId ASC"
             )
             with engine.connect() as conn:
                 res = conn.execute(query)
@@ -142,9 +148,10 @@ class RulesStore:
         if engine is None:
             raise RuntimeError("Database connection unavailable")
 
+        tbl = cls._table_name(engine)
         query = text(
-            "INSERT INTO dbo.NLP_SQL_Rules (Category, RuleName, RuleContent, RoleId, IsActive, DisplayOrder) "
-            "VALUES (:cat, :name, :content, :role, :active, :order)"
+            f"INSERT INTO {tbl} (Category, RuleName, RuleContent, RoleId, IsActive, DisplayOrder) "
+            f"VALUES (:cat, :name, :content, :role, :active, :order)"
         )
         with engine.begin() as conn:
             conn.execute(
@@ -159,7 +166,7 @@ class RulesStore:
                 },
             )
             # Fetch inserted ID
-            res = conn.execute(text("SELECT MAX(RuleId) FROM dbo.NLP_SQL_Rules"))
+            res = conn.execute(text(f"SELECT MAX(RuleId) FROM {tbl}"))
             new_id = res.scalar() or 1
 
         cls.invalidate_cache()
@@ -189,6 +196,7 @@ class RulesStore:
         if engine is None:
             return False
 
+        tbl = cls._table_name(engine)
         updates = []
         params: dict[str, Any] = {"rule_id": rule_id}
         if category is not None:
@@ -213,7 +221,7 @@ class RulesStore:
         if not updates:
             return True
 
-        query_str = f"UPDATE dbo.NLP_SQL_Rules SET {', '.join(updates)} WHERE RuleId = :rule_id"
+        query_str = f"UPDATE {tbl} SET {', '.join(updates)} WHERE RuleId = :rule_id"
         with engine.begin() as conn:
             conn.execute(text(query_str), params)
 
@@ -226,7 +234,8 @@ class RulesStore:
         if engine is None:
             return False
 
-        query = text("DELETE FROM dbo.NLP_SQL_Rules WHERE RuleId = :rule_id")
+        tbl = cls._table_name(engine)
+        query = text(f"DELETE FROM {tbl} WHERE RuleId = :rule_id")
         with engine.begin() as conn:
             conn.execute(query, {"rule_id": rule_id})
 
