@@ -7,8 +7,8 @@ const STORAGE_KEY = "nlp_sql_chat";
 
 /* ── Cumulative token tracking ── */
 let sessionTokens = { prompt: 0, completion: 0, total: 0, queryCount: 0 };
-const MODEL_CONTEXT_LIMIT = 131072; // Gemma 4 31B context window (128K)
-const MODEL_DISPLAY_NAME = "gemma4:31b-cloud";
+const MODEL_CONTEXT_LIMIT = 131072; // Context window limit (128K)
+const MODEL_DISPLAY_NAME = "NLP SQL Engine";
 
 const els = {
   apiBase: document.getElementById("apiBase"),
