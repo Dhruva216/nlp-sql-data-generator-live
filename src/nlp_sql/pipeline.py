@@ -72,8 +72,12 @@ def answer_request(
         )
 
     # Fetch dynamic database rules from dbo.NLP_SQL_Rules (if available)
-    db_rules = RulesStore.get_active_rules(cfg, role_id=role_id)
-    dynamic_rule_texts = [r.rule_content for r in db_rules]
+    dynamic_rule_texts: list[str] = []
+    try:
+        db_rules = RulesStore.get_active_rules(cfg, role_id=role_id)
+        dynamic_rule_texts = [r.rule_content for r in db_rules]
+    except Exception:
+        dynamic_rule_texts = []
 
     db_id, sql, expl, usage = generate_sql_sync(
         user_request,
