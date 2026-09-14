@@ -23,7 +23,7 @@ def serve(
     """Run the API and chat UI at http://127.0.0.1:8000 (databases accessed only server-side)."""
     import uvicorn
 
-    uvicorn.run("nlp_sql.api:app", host=host, port=port, reload=False)
+    uvicorn.run("nlp_sql.api:app", host=host, port=port, reload=False, lifespan="off")
 
 
 @app.command("auth")
