@@ -368,8 +368,8 @@ async function sendQuestion(text) {
 
 function updateRoleUI() {
   if (!els.roleSelect || !els.testUserIdWrap) return;
-  const isStudent = els.roleSelect.value === "2";
-  els.testUserIdWrap.hidden = !isStudent;
+  const isScopedRole = els.roleSelect.value === "2" || els.roleSelect.value === "3";
+  els.testUserIdWrap.hidden = !isScopedRole;
 }
 
 function init() {

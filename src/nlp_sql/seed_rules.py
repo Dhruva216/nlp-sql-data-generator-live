@@ -69,6 +69,13 @@ INITIAL_RULES = [
         "role_id": 2,
         "display_order": 10,
     },
+    {
+        "category": "RoleRule",
+        "name": "Instructor_Role_Isolation",
+        "content": "ABSOLUTE SECURITY OVERRIDE FOR INSTRUCTOR ROLE (ROLEID = 3): Active User Context: INSTRUCTOR (RoleId = 3). YOU MUST OVERRIDE AND IGNORE ANY OTHER INSTRUCTOR NAME OR ID. YOU MUST ONLY QUERY AND RETURN DATA AND PAY DETAILS STRICTLY BELONGING TO UserId = {active_uid}.",
+        "role_id": 3,
+        "display_order": 11,
+    },
 ]
 
 TABLE_DDL = """

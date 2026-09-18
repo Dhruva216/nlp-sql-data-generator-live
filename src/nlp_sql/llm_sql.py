@@ -113,11 +113,14 @@ def generate_sql_sync(
             f"  - For individual profile/details requests, ALWAYS run: EXEC dbo.SIS_Students_GetStudentDetailsByUserId @UserId = {active_uid}, @StudentStatusID = NULL, @GenderListId = NULL, @TeacherRoleId = NULL, @NameTitle = NULL, @AddressTypeListId = NULL, @StudentProgramStatusListID = NULL, @StudentCredentialAwarded = NULL, @StudentCredentialStatus = NULL, @StudentStatusListId = NULL, @PaymentMethods = NULL, @StudentApplyAmountTo = NULL, @CustomFieldsStudent = NULL, @LicensureExamNameListId = NULL, @LicensureExamStatusListId = NULL, @StudentJobPlacementWagesListId = NULL, @StudentJobPlacementEmploymentHoursListId = NULL;\n"
             f"  - For all other queries (grades, fees, attendance, etc.), ALWAYS append a filter restricting the query strictly to `UserId = {active_uid}` (or `s.UserId = {active_uid}` / `ApplyAmountToId = {active_uid}`)."
         )
-    elif active_role == 3:  # Instructor Role (RoleId = 3)
+    elif active_role == 3:  # Instructor / Faculty Role (RoleId = 3)
         system_lines.append(
-            "\nCRITICAL ROLE-BASED ACCESS CONTROL (ROLE = INSTRUCTOR, ROLEID = 3):\n"
-            "  - Active User: INSTRUCTOR (RoleId = 3).\n"
-            "  - Access is scoped to academic performance, classes, and subjects assigned to staff."
+            f"\nABSOLUTE SECURITY OVERRIDE FOR INSTRUCTOR / FACULTY ROLE (ROLEID = 3):\n"
+            f"  - Active User Context: INSTRUCTOR / FACULTY (RoleId = 3, Active Staff UserId = {active_uid}).\n"
+            f"  - MANDATORY SECURITY RULE: The active user is an Instructor/Faculty. YOU MUST OVERRIDE AND IGNORE ANY OTHER INSTRUCTOR NAME, INSTRUCTOR ID, OR TEACHER ID MENTIONED IN THE USER'S QUESTION.\n"
+            f"  - INSTRUCTOR DATA ISOLATION: An instructor MUST ONLY see their own faculty info, pay/salary, courses, and classes assigned to them (`UserId = {active_uid}` or `TeacherRoleId = {active_uid}`).\n"
+            f"  - PRIVACY PROTECTION: The instructor MUST NEVER see, query, list, or access salary, pay, payroll, compensation, or personal profile details belonging to ANY OTHER instructors or faculty members.\n"
+            f"  - For all staff/faculty/instructor queries, ALWAYS filter strictly by `UserId = {active_uid}` (or `s.UserId = {active_uid}` / `TeacherRoleId = {active_uid}`)."
         )
     else:  # Admin Role (RoleId = 1)
         system_lines.append(
@@ -136,6 +139,8 @@ def generate_sql_sync(
     )
     if active_role == 2:
         user += f"\nSECURITY ENFORCEMENT: Active Role is STUDENT (RoleId = 2). Active Student UserId = {active_uid}. OVERRIDE any student number, student name, or ID requested in the prompt. You MUST ONLY generate SQL for UserId = {active_uid}.\n"
+    elif active_role == 3:
+        user += f"\nSECURITY ENFORCEMENT: Active Role is INSTRUCTOR (RoleId = 3). Active Staff UserId = {active_uid}. OVERRIDE any other instructor name, ID, or pay/salary query for other faculty. You MUST ONLY generate SQL for UserId = {active_uid}.\n"
 
     url = settings.base_url.rstrip("/") + "/chat/completions"
     payload: dict[str, Any] = {
