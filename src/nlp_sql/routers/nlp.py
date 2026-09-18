@@ -16,7 +16,7 @@ router = APIRouter()
 class NlpQueryRequest(BaseModel):
     text: str = Field(..., min_length=1, description="Natural language question")
     role_id: Optional[int] = Field(default=1, description="Active Role ID (1=Admin, 2=Student, 3=Instructor)")
-    user_id: Optional[int] = Field(default=296, description="Active User ID for student scoping (e.g. 296 for Suraj Demo)")
+    user_id: Optional[int] = Field(default=None, description="Active User ID of the logged-in user/staff for dynamic data isolation")
 
 
 class NlpQueryResponse(BaseModel):
