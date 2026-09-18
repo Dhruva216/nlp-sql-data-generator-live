@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 from dotenv import load_dotenv
 
 from sqlalchemy import text
@@ -13,7 +14,7 @@ load_dotenv(override=True)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-INITIAL_RULES = [
+INITIAL_RULES: list[dict[str, Any]] = [
     {
         "category": "TableMapping",
         "name": "Subject_Table_Mapping",
@@ -138,15 +139,21 @@ def seed_database_rules() -> None:
 
         logger.info(f"Seeding initial rules into {tbl}...")
         for rule in INITIAL_RULES:
+            c_val = rule["category"]
+            n_val = rule["name"]
+            cnt_val = rule["content"]
+            r_val = rule["role_id"]
+            d_val = rule["display_order"]
             RulesStore.create_rule(
                 config,
-                category=rule["category"],
-                rule_name=rule["name"],
-                rule_content=rule["content"],
-                role_id=rule["role_id"],
-                display_order=rule["display_order"],
+                category=str(c_val) if c_val is not None else "",
+                rule_name=str(n_val) if n_val is not None else "",
+                rule_content=str(cnt_val) if cnt_val is not None else "",
+                role_id=int(r_val) if r_val is not None else None,
+                display_order=int(d_val) if d_val is not None else 0,
             )
         logger.info("Database rules seeded successfully!")
+
     except Exception as e:
         logger.error(f"Failed to seed database rules: {e}")
 
