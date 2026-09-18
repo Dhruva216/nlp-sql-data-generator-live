@@ -36,3 +36,9 @@ dev-mode-dirs = ["src"]
 
 [tool.hatch.build.targets.wheel]
 only-include = ["src/nlp_sql"]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+extraPaths = ["src"]
+
