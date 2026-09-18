@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from dotenv import load_dotenv
+
 from sqlalchemy import text
 
 from nlp_sql.config import load_config
@@ -96,7 +97,7 @@ END
 """
 
 SQLITE_TABLE_DDL = """
-CREATE TABLE IF NOT EXISTS dbo_NLP_SQL_Rules (
+CREATE TABLE IF NOT EXISTS NLP_SQL_Rules (
     RuleId INTEGER PRIMARY KEY AUTOINCREMENT,
     Category TEXT NOT NULL,
     RuleName TEXT NOT NULL,
@@ -117,38 +118,39 @@ def seed_database_rules() -> None:
         logger.error("No database engine available for seeding rules.")
         return
 
-    logger.info("Initializing dbo.NLP_SQL_Rules table...")
-    with engine.begin() as conn:
-        dialect_name = engine.dialect.name
-        if dialect_name == "mssql":
-            conn.execute(text(TABLE_DDL))
-        else:
-            # Fallback table DDL for SQLite / Postgres
-            conn.execute(text(TABLE_DDL.replace("dbo.NLP_SQL_Rules", "NLP_SQL_Rules")))
+    try:
+        tbl = RulesStore._table_name(engine)
+        logger.info(f"Initializing {tbl} table...")
+        with engine.begin() as conn:
+            dialect_name = engine.dialect.name
+            if dialect_name == "mssql":
+                conn.execute(text(TABLE_DDL))
+            else:
+                conn.execute(text(SQLITE_TABLE_DDL))
 
-    # Check if table already has rows
-    with engine.connect() as conn:
-        try:
-            count = conn.execute(text("SELECT COUNT(*) FROM dbo.NLP_SQL_Rules")).scalar()
-        except Exception:
-            count = conn.execute(text("SELECT COUNT(*) FROM NLP_SQL_Rules")).scalar()
+        # Check if table already has rows
+        with engine.connect() as conn:
+            count = conn.execute(text(f"SELECT COUNT(*) FROM {tbl}")).scalar()
 
-    if count and count > 0:
-        logger.info(f"dbo.NLP_SQL_Rules already contains {count} rules. Skipping initial seed.")
-        return
+        if count and count > 0:
+            logger.info(f"{tbl} already contains {count} rules. Skipping initial seed.")
+            return
 
-    logger.info("Seeding initial rules into dbo.NLP_SQL_Rules...")
-    for rule in INITIAL_RULES:
-        RulesStore.create_rule(
-            config,
-            category=rule["category"],
-            rule_name=rule["name"],
-            rule_content=rule["content"],
-            role_id=rule["role_id"],
-            display_order=rule["display_order"],
-        )
-    logger.info("Database rules seeded successfully!")
+        logger.info(f"Seeding initial rules into {tbl}...")
+        for rule in INITIAL_RULES:
+            RulesStore.create_rule(
+                config,
+                category=rule["category"],
+                rule_name=rule["name"],
+                rule_content=rule["content"],
+                role_id=rule["role_id"],
+                display_order=rule["display_order"],
+            )
+        logger.info("Database rules seeded successfully!")
+    except Exception as e:
+        logger.error(f"Failed to seed database rules: {e}")
 
 
 if __name__ == "__main__":
     seed_database_rules()
+
