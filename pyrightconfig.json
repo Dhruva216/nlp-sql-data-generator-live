@@ -1,9 +1,12 @@
 {
   "venvPath": ".",
   "venv": ".venv",
+  "pythonVersion": "3.13",
+  "pythonPlatform": "Darwin",
   "pythonPath": ".venv/bin/python",
   "extraPaths": [
     "src",
-    ".venv/lib/python3.13/site-packages"
+    ".venv/lib/python3.13/site-packages",
+    ".venv/lib/python3.12/site-packages"
   ]
 }
